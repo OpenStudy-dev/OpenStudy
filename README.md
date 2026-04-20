@@ -151,6 +151,10 @@ docs/
 The visual design was prototyped in [Claude Design](https://claude.ai/design). The brief that produced it — plus a reusable template for writing your own briefs — is at [`docs/claude-design-brief.md`](./docs/claude-design-brief.md).
 The one that i used to transform the UI is at (If you are coming from the reddit post) [`docs/examples/design-brief-example.md`](./docs/examples/design-brief-example.md).
 
+## Heads up
+
+This started as a personal project for a German university, so **don't be surprised if you spot hardcoded German strings** here and there — slot kinds (`Vorlesung`, `Übung`, `Tutorium`, `Praktikum`), the odd UI label, sample data. PRs to genericize or i18n any of it are very welcome.
+
 ## License
 
 MIT — do whatever you like. Credit / a star / a link back is appreciated but not required.

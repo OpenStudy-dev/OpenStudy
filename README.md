@@ -18,6 +18,28 @@ A self-hostable personal study dashboard. Track your **courses, schedule, lectur
 
 Claude calls `list_course_files` to locate the PDF in the app's file store, then `read_course_file` — which renders each page to a PNG and streams it back as vision input. Claude answers questions about the lecture without you uploading anything.
 
+## How I use this
+
+A typical week of studying with Claude + the dashboard:
+
+**Right after a lecture.** Walking out of class, I open Claude on my phone: *"We just finished VL 4 of ASB, covered pumping lemma, closure properties, and non-regularity of aⁿbⁿ."* Claude creates the lecture #4, adds the study topics with proper descriptions linked to lecture #4, marks it attended. couple of seconds. The dashboard is caught up.
+
+**Later that day, I drop the slides in.** I upload the slides of the lecture to the app. Claude can now fetch and read the slides on demand (Through the MCP) and use them to teach me. (it can also fetch only the pages of the slides it needs to teach me, so it doesn't have to read the whole PDF).
+
+**Evening, sitting down to actually study.** *"Am I falling behind in anything?"* Claude pulls the fall-behind list — *"3 ASB topics unstudied, next lecture in 7h."* I pick the first one:
+
+> *"Walk me through pumping lemma §2.4. Pull the ASB VL4 slides and use the actual definition and example from there. Ask me a check question halfway through."*
+
+Claude calls `list_study_topics` to find the topic row, `list_course_files` + `read_course_file` to fetch the slides (pages rendered to PNGs — Claude literally sees them, not OCR text), then teaches from the prof's slide wording. When it hits the check question I answer, it either corrects me or moves on. When I confirm I've got it: *"mark §2.4 studied,"* and Claude calls `mark_studied`.
+
+Then the next topic. Same loop. The "3 unstudied" count on the dashboard ticks down in real time.
+
+**Before bed, planning tomorrow.** *"What's due this week?"* One list, sorted by due date. *"Add a task: finish ASB Blatt 3 by Monday 16:00, high priority."* Done.
+
+**On the dashboard itself.** Everything Claude did — the lecture, the topics, the mark-studied, the task — is already there when I open the UI. The *falling-behind* banner only fires when I have unstudied topics and the next lecture on them is close. The weekly grid shows what's coming. Course cards show per-course progress. I don't have to tell the dashboard what I did because Claude already did.
+
+The dashboard is where I see things. Claude is how I edit them. Same database behind both. (You can also use the dashboard UI to edit things, of course, It does have CRUD operations for everything).
+
 ## What makes it different
 
 The MCP server ships with **~45 tools — anything you can do in the UI, Claude can do too**. Create a study topic, mark something studied, upload a file, render a PDF as images, whatever.

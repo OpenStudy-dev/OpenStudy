@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd web && npx -y pnpm@10.33.0 install --no-frozen-lockfile && npx -y pnpm@10.33.0 build",
+  "outputDirectory": "web/dist",
+  "installCommand": "echo skipping root install",
+  "framework": null,
+  "functions": {
+    "api/index.py": { "runtime": "@vercel/python@4.7.2" }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/api", "destination": "/api/index" },
+    { "source": "/.well-known/(.*)", "destination": "/api/index" },
+    { "source": "/oauth/(.*)", "destination": "/api/index" },
+    { "source": "/mcp", "destination": "/api/index" },
+    { "source": "/mcp/(.*)", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

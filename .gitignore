@@ -1,0 +1,50 @@
+# dependencies
+node_modules/
+.pnpm-store/
+web/.vite/
+
+# builds
+dist/
+build/
+out/
+web/dist/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+api/.venv/
+mcp/.venv/
+
+# editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# vercel
+.vercel/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+.vercel
+
+# tool-local state
+.claude/
+supabase/

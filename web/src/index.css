@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================================================
+   Study Dashboard — design tokens
+   From the Claude Design handoff (Apr 2026):
+   • Inter Tight (sans) + Fraunces (serif, crafted editorial feel) + JetBrains Mono.
+   • Warm near-black, OKLCH-based palette, 3 elevation layers.
+   • 4 course accents (ASB blue · RN emerald · RA amber · AML rose),
+     used as 3px left stripe on cards/rows — never as full tiles.
+   • Signature motif: hand-drawn ink dot for "today" + serif numerals.
+   • Motion: 150ms ease-out only, reserved for state transitions.
+
+   Each color is defined twice:
+   • `--<name>-c`  — the raw OKLCH components, for `oklch(var(--x-c) / alpha)`.
+     Tailwind utilities (`bg-warn`, `text-critical/40`) consume this form.
+   • `--<name>`    — the fully-formed color, for direct CSS use.
+   ====================================================================== */
+
+@layer base {
+  :root {
+    --bg-c:           0.18 0.006 60;
+    --surface-c:      0.22 0.006 60;
+    --surface-2-c:    0.255 0.006 60;
+    --surface-3-c:    0.29 0.006 60;
+    --border-c:       0.32 0.006 60;
+    --border-strong-c:0.38 0.006 60;
+    --hairline-c:     0.40 0.006 60;
+
+    --fg-c:      0.97 0.006 90;
+    --fg-dim-c:  0.85 0.006 80;
+    --muted-c:   0.64 0.006 70;
+    --subtle-c:  0.50 0.006 70;
+    --ink-c:     0.97 0.006 90;
+
+    --ok-c:       0.74 0.14 155;
+    --info-c:     0.72 0.14 240;
+    --warn-c:     0.78 0.14 70;
+    --critical-c: 0.68 0.20 25;
+
+    /* Resolved forms for direct CSS use */
+    --bg:             oklch(var(--bg-c));
+    --surface:        oklch(var(--surface-c));
+    --surface-2:      oklch(var(--surface-2-c));
+    --surface-3:      oklch(var(--surface-3-c));
+    --border:         oklch(var(--border-c) / 0.6);
+    --border-strong:  oklch(var(--border-strong-c) / 0.8);
+    --hairline:       oklch(var(--hairline-c) / 0.22);
+
+    --fg:      oklch(var(--fg-c));
+    --fg-dim:  oklch(var(--fg-dim-c));
+    --muted:   oklch(var(--muted-c));
+    --subtle:  oklch(var(--subtle-c));
+    --ink:     oklch(var(--ink-c));
+
+    --ok:       oklch(var(--ok-c));
+    --info:     oklch(var(--info-c));
+    --warn:     oklch(var(--warn-c));
+    --critical: oklch(var(--critical-c));
+
+    --ring-c: var(--fg-c);
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 14px;
+
+    --font-sans:  "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+    --font-serif: "Fraunces", "Newsreader", "Times New Roman", Georgia, serif;
+    --font-mono:  "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --shadow-1: 0 1px 0 oklch(1 0 0 / 0.02) inset, 0 1px 2px oklch(0 0 0 / 0.4);
+  }
+
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01", "tnum";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+    font-size: 14px;
+    line-height: 1.45;
+    letter-spacing: -0.003em;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px oklch(var(--ring-c)), 0 0 0 4px var(--bg);
+    border-radius: 4px;
+  }
+
+  button, a { -webkit-tap-highlight-color: transparent; }
+
+  @media (hover: hover) {
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: oklch(var(--border-c) / 0.5);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--subtle); }
+  }
+
+  .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
+  .safe-top    { padding-top: calc(env(safe-area-inset-top) + 0.5rem); }
+}
+
+@layer components {
+  /* === Typography utilities === */
+  .serif {
+    font-family: var(--font-serif);
+    font-style: normal;
+    letter-spacing: -0.012em;
+    font-variation-settings: "opsz" 72, "SOFT" 30, "WONK" 0;
+  }
+  .mono  { font-family: var(--font-mono); font-feature-settings: "tnum" 1, "ss01" 1; }
+  .tnum  { font-variant-numeric: tabular-nums; }
+  .micro {
+    font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--muted); font-weight: 500;
+  }
+  .kicker {
+    font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--subtle); font-weight: 500;
+    font-family: var(--font-mono);
+  }
+
+  /* === The signature "ink dot" motif — hand-drawn with CSS === */
+  .ink-dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse 120% 80% at 30% 30%, var(--ink) 55%, transparent 70%),
+      radial-gradient(ellipse 90% 120% at 70% 70%, var(--ink) 60%, transparent 75%);
+    filter: blur(0.25px);
+    transform: translateY(-1px);
+  }
+  .ink-dot-lg { width: 14px; height: 14px; }
+
+  /* === Course pill (expects --accent custom prop on the element) === */
+  .course-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 9px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    background: color-mix(in oklch, var(--accent) 15%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  .course-pill .course-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  /* === Status chip === */
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    white-space: nowrap;
+    background: transparent;
+  }
+  .status-chip[data-s="open"]         { color: var(--muted); }
+  .status-chip[data-s="in_progress"]  { color: var(--info); border-color: color-mix(in oklch, var(--info) 30%, var(--border)); background: color-mix(in oklch, var(--info) 6%, transparent); }
+  .status-chip[data-s="submitted"]    { color: var(--ok); border-color: color-mix(in oklch, var(--ok) 30%, var(--border)); background: color-mix(in oklch, var(--ok) 6%, transparent); }
+  .status-chip[data-s="graded"]       { color: var(--ok); border-color: color-mix(in oklch, var(--ok) 40%, var(--border)); background: color-mix(in oklch, var(--ok) 10%, transparent); }
+  .status-chip[data-s="not_started"]  { color: var(--muted); }
+  .status-chip[data-s="studied"]      { color: var(--ok); border-color: color-mix(in oklch, var(--ok) 30%, var(--border)); background: color-mix(in oklch, var(--ok) 6%, transparent); }
+  .status-chip[data-s="mastered"]     { color: var(--ok); border-color: color-mix(in oklch, var(--ok) 50%, var(--border)); background: color-mix(in oklch, var(--ok) 12%, transparent); font-weight: 600; }
+  .status-chip[data-s="struggling"]   { color: var(--critical); border-color: color-mix(in oklch, var(--critical) 40%, var(--border)); background: color-mix(in oklch, var(--critical) 8%, transparent); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* === The pulse animation (fall-behind banner indicator) === */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.pulse-ring {
+  position: relative;
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.pulse-ring::after {
+  content: "";
+  position: absolute; inset: -4px; border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: 0.4;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 150ms ease-out; }
+.animate-slide-up { animation: slide-up 200ms ease-out; }

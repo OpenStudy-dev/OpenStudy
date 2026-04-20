@@ -1,0 +1,37 @@
+[project]
+name = "study-dashboard-api"
+version = "0.1.0"
+description = "FastAPI backend for the study-dashboard app"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "uvicorn[standard]>=0.32",
+  "python-multipart>=0.0.12",
+  "itsdangerous>=2.2",
+  "argon2-cffi>=23.1",
+  "postgrest>=0.17",
+  "httpx>=0.28",
+  "python-dateutil>=2.9",
+  "tzdata>=2024.2",
+  "mcp>=1.2",
+  "pymupdf>=1.24",
+  "pillow>=10.4",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+  "ruff>=0.7",
+]
+scripts = [
+  "watchdog>=5",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

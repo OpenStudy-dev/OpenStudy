@@ -173,29 +173,29 @@ After the initial deploy, `git push origin main` auto-redeploys.
 
 The FastAPI app mounts a Streamable HTTP MCP endpoint at `/mcp`, OAuth-gated. **One endpoint, same tools for every client** — Claude.ai, Claude Code, the Claude phone app, anything else that speaks remote-HTTP MCP.
 
-Set `$URL` once and use it everywhere:
+Your endpoint URL is:
 
-```bash
-# Pick the one that matches where the app is running:
-export URL=https://<your-project>.vercel.app/mcp   # deployed
-# or
-export URL=http://localhost:8000/mcp               # local dev
+```
+https://<your-project>.vercel.app/mcp
 ```
 
-### Claude.ai (browser → also picked up by the Claude iOS app)
+Replace `<your-project>` with your own Vercel project name. (If you skipped deployment and only want to wire it into Claude Code locally, use `http://localhost:8000/mcp` instead — but Claude.ai and the Claude phone app can't reach `localhost`.)
 
-1. **Settings → Connectors → Add custom connector**
-2. Paste `$URL`.
+### Claude.ai (browser → also picked up by the Claude phone app)
+
+1. Go to **Settings → Connectors → Add custom connector** in claude.ai.
+2. Paste your endpoint URL (e.g. `https://your-project.vercel.app/mcp`).
 3. Claude redirects you to your dashboard's login — type your password, click **Authorize**.
 4. Toggle the connector on in whichever chats / Projects you want.
-5. Smoke test: *"list my courses"*.
+5. Smoke test: ask Claude *"list my courses"*.
 
-Once added on claude.ai, the same connector appears in the **Claude iOS app** automatically.
+Once added on claude.ai, the same connector appears in the **Claude phone app** automatically.
 
 ### Claude Code CLI
 
 ```bash
-claude mcp add --transport http --scope user study-dashboard "$URL"
+claude mcp add --transport http --scope user \
+  study-dashboard https://<your-project>.vercel.app/mcp
 ```
 
 `--scope user` makes the connector available in every directory you run `claude` from. The CLI opens your browser for the OAuth flow on first use; the token's cached in `~/.claude.json`.
@@ -204,16 +204,14 @@ Smoke test inside `claude`: *"list my courses"*.
 
 ### Verify the endpoint without a client
 
-The OAuth discovery endpoint is public and makes a good sanity check:
+The OAuth discovery endpoint is public — hitting it is a quick way to confirm the server is reachable and OAuth is wired up before you involve Claude at all:
 
 ```bash
-# Drop the trailing /mcp and hit /.well-known/ at the origin root
-ORIGIN="${URL%/mcp}"
-curl -s "$ORIGIN/.well-known/oauth-authorization-server" | head -40
+curl -s https://<your-project>.vercel.app/.well-known/oauth-authorization-server | head -40
 # → should return JSON with `issuer`, `authorization_endpoint`, `token_endpoint`, etc.
 ```
 
-If that returns JSON, the server is reachable and OAuth is wired up. A 404 / 500 here means the deployment's wrong before we even get to auth — usually a missing `PUBLIC_URL` env var.
+A 404 / 500 here means the deployment's wrong before we even get to auth — usually a missing `PUBLIC_URL` env var on Vercel.
 
 ### Pair Claude.ai with a Project prompt
 

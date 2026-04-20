@@ -1,7 +1,12 @@
-"""Pydantic models mirroring the database schema (see db/migrations/0001_init.sql)."""
+"""Pydantic models mirroring the database schema (see supabase/migrations/).
+
+Enum values are English-canonical. German values from legacy data or old MCP
+integrations are accepted on input and normalized at validation time — see the
+`_*_ALIASES` maps below.
+"""
 from datetime import date, datetime, time
-from typing import Annotated, List, Literal, Optional
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from typing import Annotated, Any, List, Literal, Optional
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints
 
 # A course code is a short uppercase identifier the user picks (e.g. "ASB", "CS101", "MATH").
 # 1–8 characters, letters + digits.
@@ -9,18 +14,59 @@ CourseCode = Annotated[
     str,
     StringConstraints(min_length=1, max_length=8, pattern=r"^[A-Z0-9]+$"),
 ]
-SlotKind = Literal["Vorlesung", "Übung", "Tutorium", "Praktikum"]
+
+# ---------- Enum normalization ----------
+# Canonical kind values are English. Legacy German spellings are accepted on
+# input and normalized at validation time so existing integrations keep working.
+_SLOT_KIND_ALIASES = {
+    "vorlesung": "lecture",
+    "übung":     "exercise",
+    "uebung":    "exercise",
+    "tutorium":  "tutorial",
+    "praktikum": "lab",
+}
+_STUDY_TOPIC_KIND_ALIASES = {
+    "vorlesung": "lecture",
+    "übung":     "exercise",
+    "uebung":    "exercise",
+}
+_DELIVERABLE_KIND_ALIASES = {
+    "abgabe":    "submission",
+    "praktikum": "lab",
+}
+
+
+def _normalize(aliases: dict[str, str]):
+    def fn(v: Any) -> Any:
+        if isinstance(v, str):
+            s = v.strip().lower()
+            return aliases.get(s, s)
+        return v
+    return fn
+
+
+SlotKind = Annotated[
+    Literal["lecture", "exercise", "tutorial", "lab"],
+    BeforeValidator(_normalize(_SLOT_KIND_ALIASES)),
+]
+StudyTopicKind = Annotated[
+    Literal["lecture", "exercise", "reading"],
+    BeforeValidator(_normalize(_STUDY_TOPIC_KIND_ALIASES)),
+]
+DeliverableKind = Annotated[
+    Literal["submission", "project", "lab", "block"],
+    BeforeValidator(_normalize(_DELIVERABLE_KIND_ALIASES)),
+]
+
 StudyTopicStatus = Literal[
     "not_started", "in_progress", "studied", "mastered", "struggling"
 ]
-StudyTopicKind = Literal["vorlesung", "uebung", "reading"]
-DeliverableKind = Literal["abgabe", "project", "praktikum", "block"]
 DeliverableStatus = Literal[
     "open", "in_progress", "submitted", "graded", "skipped"
 ]
 TaskStatus = Literal["open", "in_progress", "done", "skipped", "blocked"]
 TaskPriority = Literal["low", "med", "high", "urgent"]
-KlausurStatus = Literal["planned", "confirmed", "done"]
+ExamStatus = Literal["planned", "confirmed", "done"]
 FallBehindSeverity = Literal["ok", "warn", "critical"]
 
 
@@ -60,8 +106,8 @@ class CourseCreate(BaseModel):
     language: Optional[str] = None
     color_hex: Optional[str] = None
     folder_name: Optional[str] = None
-    klausur_weight: int = 100
-    klausur_retries: Optional[int] = None
+    exam_weight: int = 100
+    exam_retries: Optional[int] = None
     notes: Optional[str] = None
 
 
@@ -75,8 +121,8 @@ class CoursePatch(BaseModel):
     language: Optional[str] = None
     color_hex: Optional[str] = None
     folder_name: Optional[str] = None
-    klausur_weight: Optional[int] = None
-    klausur_retries: Optional[int] = None
+    exam_weight: Optional[int] = None
+    exam_retries: Optional[int] = None
     notes: Optional[str] = None
 
 
@@ -92,8 +138,8 @@ class Course(BaseModel):
     language: Optional[str] = None
     color_hex: Optional[str] = None
     folder_name: Optional[str] = None
-    klausur_weight: int = 100
-    klausur_retries: Optional[int] = None
+    exam_weight: int = 100
+    exam_retries: Optional[int] = None
     notes: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -131,19 +177,19 @@ class Slot(SlotCreate):
     updated_at: Optional[datetime] = None
 
 
-# ---------- Klausur ----------
-class KlausurPatch(BaseModel):
+# ---------- Exam ----------
+class ExamPatch(BaseModel):
     scheduled_at: Optional[datetime] = None
     duration_min: Optional[int] = None
     location: Optional[str] = None
     structure: Optional[str] = None
     aids_allowed: Optional[str] = None
-    status: Optional[KlausurStatus] = None
+    status: Optional[ExamStatus] = None
     weight_pct: Optional[int] = None
     notes: Optional[str] = None
 
 
-class Klausur(BaseModel):
+class Exam(BaseModel):
     model_config = ConfigDict(extra="ignore")
     course_code: CourseCode
     scheduled_at: Optional[datetime] = None
@@ -151,7 +197,7 @@ class Klausur(BaseModel):
     location: Optional[str] = None
     structure: Optional[str] = None
     aids_allowed: Optional[str] = None
-    status: KlausurStatus = "planned"
+    status: ExamStatus = "planned"
     weight_pct: int = 100
     notes: Optional[str] = None
 
@@ -305,7 +351,7 @@ class DashboardSummary(BaseModel):
     now: datetime
     courses: List[Course]
     slots: List[Slot]
-    klausuren: List[Klausur]
+    exams: List[Exam]
     deliverables: List[Deliverable]
     tasks: List[Task]
     study_topics: List[StudyTopic]
@@ -326,7 +372,7 @@ class SessionInfo(BaseModel):
 class LectureTopicsAdd(BaseModel):
     course_code: CourseCode
     covered_on: date
-    kind: StudyTopicKind = "vorlesung"
+    kind: StudyTopicKind = "lecture"
     topics: List[dict]  # list of {chapter?, name, status?, sort_order?}
     lecture_id: Optional[str] = None
     create_lecture: Optional[LectureCreate] = None  # if set, create lecture and link topics

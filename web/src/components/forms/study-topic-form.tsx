@@ -123,8 +123,8 @@ export function StudyTopicForm({ open, onOpenChange, topic, courseCode, lectures
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">—</SelectItem>
-                  <SelectItem value="vorlesung">Vorlesung</SelectItem>
-                  <SelectItem value="uebung">Übung</SelectItem>
+                  <SelectItem value="lecture">Lecture</SelectItem>
+                  <SelectItem value="exercise">Exercise</SelectItem>
                   <SelectItem value="reading">Reading</SelectItem>
                 </SelectContent>
               </Select>

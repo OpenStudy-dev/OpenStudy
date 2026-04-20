@@ -116,24 +116,55 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ## 4. Apply the migrations
 
-The SQL files under `db/migrations/` are the whole schema (courses, lectures, study topics, deliverables, tasks, OAuth tables, etc.). Apply them **in numeric order**.
+The SQL files under `supabase/migrations/` are the whole schema (courses, lectures, study topics, deliverables, tasks, OAuth tables, etc.). They get applied by the **Supabase CLI**, which tracks applied migrations in `supabase_migrations.schema_migrations` — so every subsequent push only runs what's new.
 
-**Easiest path — paste each file into the Supabase dashboard's SQL editor:**
-
-1. Open **SQL Editor → New query**
-2. Paste `db/migrations/0001_init.sql` → **Run**
-3. Paste `db/migrations/0002_lectures.sql` → **Run**
-4. Paste `db/migrations/0003_oauth.sql` → **Run**
-5. Paste `db/migrations/0004_app_settings.sql` → **Run**
-
-**If you have the Supabase CLI installed, you could also do this** (`npm i -g supabase` or via `npx`):
+**Primary path — `supabase db push`** (recommended, keeps the migration table clean):
 
 ```bash
-npx supabase link --project-ref YOUR-PROJECT-REF   # one-time
-for f in db/migrations/*.sql; do
-  npx supabase db query --linked --file "$f"
-done
+# Authenticate once, per machine:
+npx supabase login                                # opens browser
+
+# Link this checkout to your project (grab the project-ref from
+# supabase.com → Project Settings → General):
+npx supabase link --project-ref YOUR-PROJECT-REF
+
+# Apply every pending migration:
+npx supabase db push
 ```
+
+On a fresh project this runs all five migrations in order and records them. On subsequent updates (e.g. after a `git pull` brings in a new migration file), re-running `npx supabase db push` applies only the new ones.
+
+> 💡 If you'd rather install the CLI globally instead of using `npx`:
+> `npm i -g supabase` and then drop the `npx` prefix.
+
+### Upgrading an existing DB (you previously ran migrations via the SQL editor)
+
+If you applied migrations manually before, Supabase doesn't yet know they're applied — a naive `db push` would try to re-run them and the `ALTER TABLE RENAME` in migration 5 would fail. Tell the CLI which ones are already in place:
+
+```bash
+npx supabase migration list                       # shows local vs. remote status
+# For every migration already applied to your DB, mark it applied:
+npx supabase migration repair --status applied 20260101000001
+npx supabase migration repair --status applied 20260115000001
+npx supabase migration repair --status applied 20260201000001
+npx supabase migration repair --status applied 20260301000001
+# Then push — only the truly-new ones run:
+npx supabase db push
+```
+
+(If you don't remember which ones are already applied: `supabase migration list` shows a ✓ on the remote side for each one that the CLI *does* know about. Unmarked rows where the tables/columns already exist in your DB are the ones needing `repair --status applied`.)
+
+### Fallback: dashboard SQL editor (no CLI)
+
+If you'd rather not involve the CLI at all — or your Postgres isn't on Supabase — open the Supabase dashboard's **SQL Editor → New query**, then paste and run each file from `supabase/migrations/` in filename order:
+
+1. `20260101000001_init.sql`
+2. `20260115000001_lectures.sql`
+3. `20260201000001_oauth.sql`
+4. `20260301000001_app_settings.sql`
+5. `20260420000001_english_canonical_kinds.sql`
+
+Same result on the database; the `schema_migrations` table just won't track them.
 
 ## 5. Run it locally
 

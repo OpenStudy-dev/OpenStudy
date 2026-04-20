@@ -24,8 +24,9 @@ coursework.
 - Docs: [INSTALL.md](./INSTALL.md), [CONTRIBUTING.md](./CONTRIBUTING.md),
   [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md), plus templates for a Claude.ai
   Project system prompt and a Claude Design redesign brief (under `docs/`).
-- Four SQL migrations under `db/migrations/` — the complete schema, apply in
-  numeric order to any Postgres.
+- SQL migrations under `supabase/migrations/` — the complete schema, applied
+  via `supabase db push` (or pasted into any Postgres SQL editor, in filename
+  order).
 - Vercel deployment config (`vercel.json`) — one project hosts both the
   static frontend and the Python API functions.
 

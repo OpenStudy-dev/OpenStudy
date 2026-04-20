@@ -20,7 +20,7 @@ def _utc(dt: datetime) -> datetime:
 def next_lecture_at(code: str, slots: List[Slot], now: datetime) -> Optional[datetime]:
     now_utc = _utc(now)
     berlin_now = now_utc.astimezone(BERLIN)
-    relevant = [s for s in slots if s.course_code == code and s.kind in ("Vorlesung", "Übung")]
+    relevant = [s for s in slots if s.course_code == code and s.kind in ("lecture", "exercise")]
     if not relevant:
         return None
     candidate: Optional[datetime] = None

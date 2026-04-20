@@ -4,7 +4,7 @@ import type {
   AppSettings,
   Course,
   Deliverable,
-  Klausur,
+  Exam,
   Lecture,
   Slot,
   StudyTopic,
@@ -26,7 +26,7 @@ export type DashboardSummary = {
   now: string;
   courses: Course[];
   slots: Slot[];
-  klausuren: Klausur[];
+  exams: Exam[];
   deliverables: Deliverable[];
   tasks: Task[];
   study_topics: StudyTopic[];
@@ -42,7 +42,7 @@ export const qk = {
   courses: ["courses"] as const,
   course: (code: string) => ["courses", code] as const,
   slots: (course_code?: string) => ["schedule-slots", course_code ?? "all"] as const,
-  klausuren: ["klausuren"] as const,
+  exams: ["exams"] as const,
   deliverables: (course_code?: string) => ["deliverables", course_code ?? "all"] as const,
   tasks: (filters?: { course_code?: string; status?: string }) =>
     ["tasks", filters?.course_code ?? "all", filters?.status ?? "all"] as const,
@@ -156,7 +156,7 @@ export function useUpdateAppSettings() {
   });
 }
 
-// ── Slots / Klausuren ──────────────────────────────────────────────────────
+// ── Slots / Exams ──────────────────────────────────────────────────────────
 export function useSlots(course_code?: string) {
   return useQuery({
     queryKey: qk.slots(course_code),
@@ -164,18 +164,18 @@ export function useSlots(course_code?: string) {
   });
 }
 
-export function useKlausuren() {
+export function useExams() {
   return useQuery({
-    queryKey: qk.klausuren,
-    queryFn: () => api.get<Klausur[]>("/api/klausuren"),
+    queryKey: qk.exams,
+    queryFn: () => api.get<Exam[]>("/api/exams"),
   });
 }
 
-export function useUpdateKlausur() {
+export function useUpdateExam() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ code, patch }: { code: string; patch: Partial<Klausur> }) =>
-      api.patch<Klausur>(`/api/klausuren/${encodeURIComponent(code)}`, patch),
+    mutationFn: ({ code, patch }: { code: string; patch: Partial<Exam> }) =>
+      api.patch<Exam>(`/api/exams/${encodeURIComponent(code)}`, patch),
     onSuccess: () => invalidateAll(qc),
   });
 }

@@ -108,11 +108,63 @@ class _AutoStartMcpApp:
             await send({"type": "http.response.body", "body": body})
 
 
+_SERVER_INSTRUCTIONS = """\
+Personal study dashboard. Tracks a student's courses and everything attached \
+to them: weekly schedule slots, individual lecture sessions, atomic study \
+topics, graded deliverables, end-of-semester exams, personal tasks, and an \
+activity log.
+
+── Mental model ────────────────────────────────────────────────────────────
+A course has a `code` (short uppercase id like ASB / CS101). Every other \
+entity is keyed off that code. Four easy-to-confuse entity families:
+
+  • schedule_slot = the weekly recurring timetable entry ("Mon 10:00 lecture")
+  • lecture       = one concrete held session on a specific date
+  • study_topic   = the smallest chunk of material the user tracks progress on
+  • deliverable   = a graded submission (problem set, project, lab, etc.)
+
+Plus: task (personal todo, not graded), exam (one per course, end-of-semester),
+event (activity log entry).
+
+── How to orient yourself ──────────────────────────────────────────────────
+1. Call `get_app_settings` first — gives you the user's timezone, locale, \
+   semester window, display name. Required for correct date math.
+2. Call `get_dashboard` to see everything at once. Prefer this over 5+ \
+   separate `list_*` calls when you need broad context.
+3. For a single course, call `get_course(code)` + the relevant `list_*` with \
+   `course_code=code`.
+
+── Conventions ─────────────────────────────────────────────────────────────
+• Kind enums are English-canonical:
+    slot/lecture.kind  = lecture | exercise | tutorial | lab
+    study_topic.kind   = lecture | exercise | reading
+    deliverable.kind   = submission | project | lab | block
+  Legacy German values (Vorlesung, Übung, Tutorium, Praktikum, abgabe, …) are \
+  still accepted on input and normalised to English — but emit English.
+• Dates are ISO: `YYYY-MM-DD` for dates, full ISO-8601 with timezone for \
+  datetimes. Use `now_here` when you need "now" in the user's timezone.
+• Ask before destructive operations (`delete_*`). They cascade.
+
+── Shortcut tools vs patches ───────────────────────────────────────────────
+Prefer the named shortcut over `update_*` when one exists — it's less \
+error-prone: `mark_studied`, `complete_task`, `mark_deliverable_submitted`, \
+`mark_lecture_attended`, `reopen_task`, `reopen_deliverable`, \
+`set_confidence`.
+
+── What to escalate to the user ────────────────────────────────────────────
+• Ambiguity between similar entities (e.g. "log the ASB lecture" — did they \
+  mean create a `lecture` row, add `study_topics`, or record an `event`?).
+• Any destructive action.
+• Unknown `course_code` values — `list_courses` first, then confirm.
+"""
+
+
 def _build_server() -> FastMCP:
     origin = _public_origin()
     resource_url = f"{origin}/mcp"
     server = FastMCP(
         "study-dashboard",
+        instructions=_SERVER_INSTRUCTIONS,
         token_verifier=SupabaseTokenVerifier(resource_url),
         auth=AuthSettings(
             issuer_url=origin,

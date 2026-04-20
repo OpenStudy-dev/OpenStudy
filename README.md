@@ -1,5 +1,7 @@
 # study-dashboard
 
+**English** · [Deutsch](./README.de.md)
+
 A self-hostable personal study dashboard. Track your **courses, schedule, lectures, study topics, deliverables, and tasks** in one place — and let **Claude** use the app from your **browser**, **phone**, **desktop**, or **Claude Code**.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
@@ -46,8 +48,8 @@ Before any of the day-to-day stuff, I had to get a semester's worth of courses, 
 
 3. **Seeded the dashboard via the MCP connector.** With Claude Code pointed at the running dashboard over MCP, I asked it to walk through each `course.md` and:
    - `create_course` with the meta (code, full name, color, ECTS, professor, language, and a `folder_name` matching the local folder — so the course-detail **Files** tab scopes to the right prefix in the bucket)
-   - `upsert_schedule_slot` for every recurring slot in `schedule.md` (lecture / tutorial / lab / seminar — or in German: Vorlesung / Übung / Tutorium / Praktikum)
-   - `update_klausur` with the exam format + retries
+   - `create_schedule_slot` for every recurring slot in `schedule.md` (kind is `lecture` / `exercise` / `tutorial` / `lab` — German aliases *Vorlesung / Übung / Tutorium / Praktikum* are still accepted on input)
+   - `update_exam` with the exam format + retries
    - `create_deliverable` for every known exercise sheet / project deadline in the semester
    - upload every PDF from each course folder into the `course_files` bucket (so `read_course_file` can hand them to Claude as vision later)
 
@@ -120,7 +122,15 @@ python -c 'import secrets; print(secrets.token_urlsafe(48))'   # → SESSION_SEC
 
 Open `.env`, paste the Supabase URL, the service key, the password hash, and the session secret. Create `web/.env.local` with `VITE_API_BASE_URL=http://localhost:8000`.
 
-**4. Apply the migrations.** In Supabase → **SQL Editor**, paste and run each file under `db/migrations/` in order (`0001_init.sql` → `0002_lectures.sql` → `0003_oauth.sql` → `0004_app_settings.sql`).
+**4. Apply the migrations.** Use the Supabase CLI — it tracks what's been applied in the `supabase_migrations.schema_migrations` table, so re-runs are safe.
+
+```bash
+npx supabase login                                  # opens browser, one-time
+npx supabase link --project-ref YOUR-PROJECT-REF    # from supabase.com → project settings → General
+npx supabase db push                                # applies everything under supabase/migrations/
+```
+
+(If you don't want the CLI, every SQL file under `supabase/migrations/` can also be pasted into the Supabase dashboard's **SQL Editor** in filename order. See [INSTALL.md §4](./INSTALL.md#4-apply-the-migrations) for both paths plus the upgrade flow for an existing DB.)
 
 **5. Run it.**
 
@@ -180,8 +190,8 @@ app/                FastAPI + MCP server (Python, uv-managed)
   services/         Supabase queries + business logic
   mcp_tools.py      The ~45 MCP tools
   schemas.py        Pydantic models
-db/
-  migrations/       Four SQL files — apply in numeric order to any Postgres
+supabase/
+  migrations/       Five SQL files — applied by `supabase db push` (or pasted into the SQL editor, in filename order)
 web/
   src/              Vite + React 19 + Tailwind + shadcn/ui frontend
 scripts/
@@ -207,7 +217,7 @@ The one that i used to transform the UI is at (If you are coming from the reddit
 
 ## Heads up
 
-This started as a personal project for a German university, so **don't be surprised if you spot hardcoded German strings** here and there — slot kinds (`Vorlesung`, `Übung`, `Tutorium`, `Praktikum`), the odd UI label, sample data. PRs to genericize or i18n any of it are very welcome.
+This started as a personal project for a German university. The UI, MCP tools, and database are now all English-canonical (slot kinds are `lecture` / `exercise` / `tutorial` / `lab`; the end-of-semester exam table is just `exams`). Legacy German values (`Vorlesung`, `Übung`, `Tutorium`, `Praktikum`, `Abgabe`) are still accepted at the API boundary and normalised on the way in — so any older MCP integration keeps working. Proper in-app i18n (EN + DE, user-switchable) is planned; PRs welcome.
 
 ## License
 

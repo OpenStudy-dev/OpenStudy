@@ -59,7 +59,7 @@ export function computeFallBehind(
 export function nextLectureAt(code: CourseCode, slots: Slot[], now: Date): Date | null {
   const berlin = toZonedTime(now, TZ);
   const courseSlots = slots.filter(
-    (s) => s.course_code === code && (s.kind === "Vorlesung" || s.kind === "Übung")
+    (s) => s.course_code === code && (s.kind === "lecture" || s.kind === "exercise")
   );
   if (courseSlots.length === 0) return null;
 

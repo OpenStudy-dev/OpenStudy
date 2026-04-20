@@ -37,14 +37,14 @@ const workspace: NavItemDef[] = [
   { to: "/courses", label: "Courses", icon: BookOpen },
   { to: "/tasks", label: "Tasks", icon: ListChecks },
   { to: "/files", label: "Files", icon: FolderOpen },
-  { to: "/klausuren", label: "Klausuren", icon: GraduationCap },
+  { to: "/exams", label: "Exams", icon: GraduationCap },
 ];
 const systemItems: NavItemDef[] = [
   { to: "/activity", label: "Activity", icon: Activity },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-const mobileOrder = ["/", "/courses", "/tasks", "/files", "/klausuren"];
+const mobileOrder = ["/", "/courses", "/tasks", "/files", "/exams"];
 
 export function Sidebar() {
   const courses = useCourses();

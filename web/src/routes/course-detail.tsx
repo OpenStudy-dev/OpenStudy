@@ -55,14 +55,14 @@ import {
   useReopenTask,
   useToggleLectureAttended,
   useUpdateCourse,
-  useUpdateKlausur,
+  useUpdateExam,
   useUpdateStudyTopic,
 } from "@/lib/queries";
 import type {
   Course,
   CourseCode,
   Deliverable,
-  Klausur,
+  Exam,
   Lecture,
   StudyTopic,
   Task,
@@ -108,7 +108,7 @@ export default function CourseDetail() {
   const courseDeliverables = data.deliverables.filter((d) => d.course_code === c);
   const courseTopics = data.study_topics.filter((t) => t.course_code === c);
   const courseLectures = data.lectures.filter((l) => l.course_code === c);
-  const klausur = data.klausuren.find((k) => k.course_code === c);
+  const exam = data.exams.find((k) => k.course_code === c);
   const courseTasks = data.tasks.filter((t) => t.course_code === c);
   const fb = data.fall_behind.find((f) => f.course_code === c);
 
@@ -150,7 +150,7 @@ export default function CourseDetail() {
           progress={progress}
           fb={fb}
           nextLecture={nextLecture}
-          klausur={klausur}
+          exam={exam}
         />
 
         <section>
@@ -186,7 +186,7 @@ export default function CourseDetail() {
               <OverviewTab
                 code={c}
                 notes={course.notes ?? undefined}
-                klausur={klausur}
+                exam={exam}
                 deliverables={courseDeliverables}
                 topics={courseTopics}
               />
@@ -217,14 +217,14 @@ export default function CourseDetail() {
   );
 }
 
-// ───────── Course header with edit notes + klausur ─────────
+// ───────── Course header with edit notes + exam ─────────
 
 function CourseHeader({
   course,
   progress,
   fb,
   nextLecture,
-  klausur,
+  exam,
 }: {
   course: Course;
   progress: number;
@@ -236,10 +236,10 @@ function CourseHeader({
       : never
     : never;
   nextLecture: Date | null;
-  klausur?: Klausur;
+  exam?: Exam;
 }) {
   const [editing, setEditing] = useState(false);
-  const [klausurEditing, setKlausurEditing] = useState(false);
+  const [examEditing, setExamEditing] = useState(false);
   const c = course.code as CourseCode;
 
   return (
@@ -271,19 +271,19 @@ function CourseHeader({
                   <CountdownChip target={nextLecture} />
                 </div>
               )}
-              {klausur?.scheduled_at && (
+              {exam?.scheduled_at && (
                 <button
                   className="flex items-center gap-2 hover:text-fg transition-colors"
-                  onClick={() => setKlausurEditing(true)}
+                  onClick={() => setExamEditing(true)}
                 >
                   <GraduationCap className="h-3.5 w-3.5 text-muted" />
-                  <span className="text-muted">Klausur</span>
-                  <CountdownChip target={klausur.scheduled_at} />
+                  <span className="text-muted">Exam</span>
+                  <CountdownChip target={exam.scheduled_at} />
                 </button>
               )}
-              {klausur && !klausur.scheduled_at && (
-                <Button variant="ghost" size="sm" onClick={() => setKlausurEditing(true)}>
-                  <GraduationCap className="h-3.5 w-3.5" /> Set Klausur date
+              {exam && !exam.scheduled_at && (
+                <Button variant="ghost" size="sm" onClick={() => setExamEditing(true)}>
+                  <GraduationCap className="h-3.5 w-3.5" /> Set exam date
                 </Button>
               )}
             </div>
@@ -319,11 +319,11 @@ function CourseHeader({
       </section>
 
       <CourseNotesForm open={editing} onOpenChange={setEditing} course={course} />
-      {klausur && (
-        <KlausurForm
-          open={klausurEditing}
-          onOpenChange={setKlausurEditing}
-          klausur={klausur}
+      {exam && (
+        <ExamForm
+          open={examEditing}
+          onOpenChange={setExamEditing}
+          exam={exam}
         />
       )}
     </>
@@ -405,35 +405,35 @@ function CourseNotesForm({
   );
 }
 
-function KlausurForm({
+function ExamForm({
   open,
   onOpenChange,
-  klausur,
+  exam,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  klausur: Klausur;
+  exam: Exam;
 }) {
-  const update = useUpdateKlausur();
+  const update = useUpdateExam();
   const [scheduledAt, setScheduledAt] = useState(
-    klausur.scheduled_at ? klausur.scheduled_at.slice(0, 16) : ""
+    exam.scheduled_at ? exam.scheduled_at.slice(0, 16) : ""
   );
-  const [durationMin, setDurationMin] = useState(String(klausur.duration_min ?? ""));
-  const [location, setLocation] = useState(klausur.location ?? "");
-  const [structure, setStructure] = useState(klausur.structure ?? "");
-  const [aidsAllowed, setAidsAllowed] = useState(klausur.aids_allowed ?? "");
-  const [status, setStatus] = useState(klausur.status);
-  const [notes, setNotes] = useState(klausur.notes ?? "");
+  const [durationMin, setDurationMin] = useState(String(exam.duration_min ?? ""));
+  const [location, setLocation] = useState(exam.location ?? "");
+  const [structure, setStructure] = useState(exam.structure ?? "");
+  const [aidsAllowed, setAidsAllowed] = useState(exam.aids_allowed ?? "");
+  const [status, setStatus] = useState(exam.status);
+  const [notes, setNotes] = useState(exam.notes ?? "");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent title={`${klausur.course_code} Klausur`}>
+      <SheetContent title={`${exam.course_code} exam`}>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
             try {
               await update.mutateAsync({
-                code: klausur.course_code,
+                code: exam.course_code,
                 patch: {
                   scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
                   duration_min: durationMin ? Number(durationMin) : undefined,
@@ -444,7 +444,7 @@ function KlausurForm({
                   notes: notes.trim() || undefined,
                 },
               });
-              toast.success("Klausur saved");
+              toast.success("Exam saved");
               onOpenChange(false);
             } catch (e) {
               toast.error((e as Error).message || "Failed");
@@ -478,7 +478,7 @@ function KlausurForm({
             <Input value={aidsAllowed} onChange={(e) => setAidsAllowed(e.target.value)} />
           </Field>
           <Field label="Status">
-            <Select value={status} onValueChange={(v) => setStatus(v as Klausur["status"])}>
+            <Select value={status} onValueChange={(v) => setStatus(v as Exam["status"])}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -513,13 +513,13 @@ function KlausurForm({
 function OverviewTab({
   code,
   notes,
-  klausur,
+  exam,
   deliverables,
   topics,
 }: {
   code: CourseCode;
   notes?: string;
-  klausur?: Klausur;
+  exam?: Exam;
   deliverables: Deliverable[];
   topics: StudyTopic[];
 }) {
@@ -533,32 +533,32 @@ function OverviewTab({
         <p className="text-sm text-fg whitespace-pre-wrap">{notes ?? "—"}</p>
       </div>
       <div className="card p-4 md:p-5">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Klausur</h3>
-        {klausur ? (
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Exam</h3>
+        {exam ? (
           <dl className="text-sm grid grid-cols-3 gap-y-1.5">
             <dt className="text-muted col-span-1">Status</dt>
             <dd className="col-span-2">
-              <StatusChip status={klausur.status} />
+              <StatusChip status={exam.status} />
             </dd>
             <dt className="text-muted col-span-1">Scheduled</dt>
             <dd className="col-span-2">
-              {klausur.scheduled_at ? fmtDateTime(klausur.scheduled_at) : "TBD"}
+              {exam.scheduled_at ? fmtDateTime(exam.scheduled_at) : "TBD"}
             </dd>
             <dt className="text-muted col-span-1">Duration</dt>
             <dd className="col-span-2">
-              {klausur.duration_min ? `${klausur.duration_min} min` : "TBD"}
+              {exam.duration_min ? `${exam.duration_min} min` : "TBD"}
             </dd>
             <dt className="text-muted col-span-1">Structure</dt>
-            <dd className="col-span-2">{klausur.structure ?? "TBD"}</dd>
+            <dd className="col-span-2">{exam.structure ?? "TBD"}</dd>
             <dt className="text-muted col-span-1">Aids</dt>
-            <dd className="col-span-2">{klausur.aids_allowed ?? "TBD"}</dd>
+            <dd className="col-span-2">{exam.aids_allowed ?? "TBD"}</dd>
             <dt className="text-muted col-span-1">Weight</dt>
-            <dd className="col-span-2">{klausur.weight_pct}%</dd>
+            <dd className="col-span-2">{exam.weight_pct}%</dd>
           </dl>
         ) : (
-          <p className="text-sm text-muted">No Klausur data.</p>
+          <p className="text-sm text-muted">No exam data.</p>
         )}
-        {klausur?.notes && <p className="text-xs text-muted mt-3">{klausur.notes}</p>}
+        {exam?.notes && <p className="text-xs text-muted mt-3">{exam.notes}</p>}
       </div>
 
       <div className="card p-4 md:p-5">
@@ -630,7 +630,7 @@ function ScheduleTab({ slots }: { slots: ReturnType<typeof useDashboard>["data"]
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">
-                  {s.kind} · {s.room}
+                  <span className="capitalize">{s.kind}</span> · {s.room}
                 </p>
                 {s.person && <p className="text-xs text-muted">{s.person}</p>}
                 {s.notes && <p className="text-xs text-subtle mt-0.5">{s.notes}</p>}
@@ -713,7 +713,7 @@ function LecturesTab({
                         #{l.number ?? "?"} · {l.title || "Untitled lecture"}
                       </p>
                       <p className="text-xs text-muted mt-0.5">
-                        {l.kind ?? "—"}
+                        <span className="capitalize">{l.kind ?? "—"}</span>
                         {l.held_on && ` · ${fmtDate(l.held_on)}`}
                         {` · ${linkedTopics.length} topic${linkedTopics.length === 1 ? "" : "s"}`}
                       </p>

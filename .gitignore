@@ -47,4 +47,4 @@ pnpm-debug.log*
 
 # tool-local state
 .claude/
-supabase/
+CLAUDE.md

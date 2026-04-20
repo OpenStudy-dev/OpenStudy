@@ -7,7 +7,7 @@ import Courses from "@/routes/courses";
 import CourseDetail from "@/routes/course-detail";
 import Tasks from "@/routes/tasks";
 import Deliverables from "@/routes/deliverables";
-import Klausuren from "@/routes/klausuren";
+import Exams from "@/routes/exams";
 import Files from "@/routes/files";
 import Activity from "@/routes/activity";
 import Settings from "@/routes/settings";
@@ -24,7 +24,7 @@ const router = createBrowserRouter([
       { path: "courses/:code", element: <CourseDetail /> },
       { path: "tasks", element: <Tasks /> },
       { path: "deliverables", element: <Deliverables /> },
-      { path: "klausuren", element: <Klausuren /> },
+      { path: "exams", element: <Exams /> },
       { path: "files", element: <Files /> },
       { path: "activity", element: <Activity /> },
       { path: "settings", element: <Settings /> },

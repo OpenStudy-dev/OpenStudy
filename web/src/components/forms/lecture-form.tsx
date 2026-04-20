@@ -25,7 +25,7 @@ export function LectureForm({ open, onOpenChange, lecture, courseCode }: Props) 
   const editing = Boolean(lecture);
   const [number, setNumber] = useState("");
   const [heldOn, setHeldOn] = useState("");
-  const [kind, setKind] = useState<SlotKind>("Vorlesung");
+  const [kind, setKind] = useState<SlotKind>("lecture");
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [attended, setAttended] = useState(false);
@@ -38,7 +38,7 @@ export function LectureForm({ open, onOpenChange, lecture, courseCode }: Props) 
     if (open) {
       setNumber(lecture?.number != null ? String(lecture.number) : "");
       setHeldOn(lecture?.held_on ?? "");
-      setKind((lecture?.kind as SlotKind) ?? "Vorlesung");
+      setKind((lecture?.kind as SlotKind) ?? "lecture");
       setTitle(lecture?.title ?? "");
       setSummary(lecture?.summary ?? "");
       setAttended(lecture?.attended ?? false);
@@ -101,10 +101,10 @@ export function LectureForm({ open, onOpenChange, lecture, courseCode }: Props) 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Vorlesung">Vorlesung</SelectItem>
-                <SelectItem value="Übung">Übung</SelectItem>
-                <SelectItem value="Tutorium">Tutorium</SelectItem>
-                <SelectItem value="Praktikum">Praktikum</SelectItem>
+                <SelectItem value="lecture">Lecture</SelectItem>
+                <SelectItem value="exercise">Exercise</SelectItem>
+                <SelectItem value="tutorial">Tutorial</SelectItem>
+                <SelectItem value="lab">Lab</SelectItem>
               </SelectContent>
             </Select>
           </Field>

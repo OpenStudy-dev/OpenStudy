@@ -25,12 +25,12 @@ export type Course = {
   language?: string | null;
   color_hex?: string | null;
   folder_name?: string | null;
-  klausur_weight?: number;
-  klausur_retries?: number | null;
+  exam_weight?: number;
+  exam_retries?: number | null;
   notes?: string | null;
 };
 
-export type SlotKind = "Vorlesung" | "Übung" | "Tutorium" | "Praktikum";
+export type SlotKind = "lecture" | "exercise" | "tutorial" | "lab";
 
 export type Slot = {
   id: string;
@@ -46,16 +46,16 @@ export type Slot = {
   notes?: string;
 };
 
-export type KlausurStatus = "planned" | "confirmed" | "done";
+export type ExamStatus = "planned" | "confirmed" | "done";
 
-export type Klausur = {
+export type Exam = {
   course_code: CourseCode;
   scheduled_at: string | null; // ISO datetime
   duration_min: number | null;
   location: string | null;
   structure: string | null;
   aids_allowed: string | null;
-  status: KlausurStatus;
+  status: ExamStatus;
   weight_pct: number;
   notes?: string;
 };
@@ -67,7 +67,7 @@ export type StudyTopicStatus =
   | "mastered"
   | "struggling";
 
-export type StudyTopicKind = "vorlesung" | "uebung" | "reading";
+export type StudyTopicKind = "lecture" | "exercise" | "reading";
 
 export type StudyTopic = {
   id: string;
@@ -85,7 +85,7 @@ export type StudyTopic = {
   sort_order?: number;
 };
 
-export type DeliverableKind = "abgabe" | "project" | "praktikum" | "block";
+export type DeliverableKind = "submission" | "project" | "lab" | "block";
 
 export type DeliverableStatus =
   | "open"

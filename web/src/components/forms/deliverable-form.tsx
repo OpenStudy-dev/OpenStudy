@@ -153,9 +153,9 @@ export function DeliverableForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">—</SelectItem>
-                  <SelectItem value="abgabe">Abgabe</SelectItem>
+                  <SelectItem value="submission">Submission</SelectItem>
                   <SelectItem value="project">Project</SelectItem>
-                  <SelectItem value="praktikum">Praktikum</SelectItem>
+                  <SelectItem value="lab">Lab</SelectItem>
                   <SelectItem value="block">Block / admin</SelectItem>
                 </SelectContent>
               </Select>

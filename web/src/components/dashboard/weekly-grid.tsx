@@ -185,7 +185,7 @@ function LectureBlock({ slot }: { slot: Slot }) {
       <div className="px-2 pl-3 py-1.5 pr-10 h-full flex flex-col gap-0.5 overflow-hidden">
         <div className="font-mono text-[10.5px] font-semibold tracking-[0.04em] truncate" style={{ color: accent }}>
           {slot.course_code}
-          <span className="text-muted font-normal pl-1.5 ml-0.5 border-l border-hairline">
+          <span className="text-muted font-normal pl-1.5 ml-0.5 border-l border-hairline capitalize">
             {slot.kind}
           </span>
         </div>
@@ -259,7 +259,7 @@ function MobileWeekly({
                     >
                       {s.course_code}
                     </span>
-                    <span className="text-[11px] text-muted">{s.kind}</span>
+                    <span className="text-[11px] text-muted capitalize">{s.kind}</span>
                     <span className="text-[11px] text-fg-dim truncate ml-auto">
                       {s.room}
                     </span>

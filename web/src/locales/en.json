@@ -514,6 +514,7 @@
     "loading": "LOADING...",
     "loadFailed": "ERR: COULD NOT FETCH DASHBOARD",
     "fallbackName": "user",
+    "wk": "Week",
     "sem": "SEM",
     "courses": "COURSES",
     "next": "NEXT",

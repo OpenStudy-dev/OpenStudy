@@ -361,7 +361,8 @@ function SwissSchedule({
             {slots
               .filter((s) => s.weekday === day.i)
               .map((s) => (
-                <div key={s.id}
+                <Link key={s.id}
+                  to={`/courses/${s.course_code}?tab=schedule`}
                   className="s-evt"
                   style={{
                     top: toTop(s.start_time.slice(0, 5)),
@@ -371,7 +372,7 @@ function SwissSchedule({
                   <div className="s-tm">{s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}</div>
                   <div className="s-tt"><span className="s-cc">{s.course_code}</span> / {s.kind}</div>
                   {s.room && <div className="s-rr">{s.room}</div>}
-                </div>
+                </Link>
               ))}
           </div>
         ))}

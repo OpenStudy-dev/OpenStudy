@@ -494,7 +494,6 @@ function TerminalWeekGrid({
       <div className="tm-sched">
         <div className="tm-sh tm-corner">
           <div className="tm-dow tm-muted">{t("terminal.wk")} {pad(cw)}</div>
-          <div className="tm-d-n">{monday.toLocaleDateString(localeCode, { month: "short" }).toUpperCase().replace(/\./g, "")}</div>
         </div>
         {days.map((day) => (
           <div key={day.i} className={"tm-sh" + (day.i === todayIdx ? " tm-today" : "")}>
@@ -521,8 +520,9 @@ function TerminalWeekGrid({
             {slots
               .filter((s) => s.weekday === day.i)
               .map((s) => (
-                <div
+                <Link
                   key={s.id}
+                  to={`/courses/${s.course_code}?tab=schedule`}
                   className="tm-blk"
                   style={
                     {
@@ -538,7 +538,7 @@ function TerminalWeekGrid({
                     <span className="tm-kind">{s.kind}</span>
                   </div>
                   {s.room && <div className="tm-rm">▸ {s.room}</div>}
-                </div>
+                </Link>
               ))}
           </div>
         ))}

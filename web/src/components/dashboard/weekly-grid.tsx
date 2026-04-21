@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { Slot, CourseCode } from "@/data/types";
 import { courseAccentVar } from "@/lib/theme";
@@ -65,9 +66,6 @@ export function WeeklyGrid({
         <div className="flex flex-col gap-1 px-3 pt-3.5 pb-3 border-b border-border border-r border-hairline bg-surface-2">
           <span className="font-mono text-[10.5px] text-subtle tracking-[0.08em]">
             {t("common.week")} {cw}
-          </span>
-          <span className="font-mono text-[10.5px] text-muted">
-            {monday.toLocaleString(localeCode, { month: "short" })}
           </span>
         </div>
 
@@ -174,8 +172,9 @@ function LectureBlock({ slot }: { slot: Slot }) {
   const height = Math.max(slotHeight(hhmm(slot.start_time), hhmm(slot.end_time)), 44);
   const accent = courseAccentVar(slot.course_code as CourseCode);
   return (
-    <div
-      className="absolute left-1.5 right-1.5 rounded-[7px] bg-surface-2 border border-border overflow-hidden cursor-pointer transition-[border-color,background,transform] hover:border-border-strong hover:-translate-y-px"
+    <Link
+      to={`/courses/${slot.course_code}?tab=schedule`}
+      className="absolute left-1.5 right-1.5 rounded-[7px] bg-surface-2 border border-border overflow-hidden cursor-pointer transition-[border-color,background,transform] hover:border-border-strong hover:-translate-y-px no-underline text-inherit block"
       style={{ top, height, ["--accent" as string]: accent } as CSSProperties}
     >
       <span
@@ -196,7 +195,7 @@ function LectureBlock({ slot }: { slot: Slot }) {
           {slot.room || "—"}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

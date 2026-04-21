@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link, Navigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
@@ -82,7 +82,12 @@ export default function CourseDetail() {
   const { code } = useParams<{ code: string }>();
   const normalized = (code ?? "").toUpperCase() as CourseCode;
   const { data, isPending, error } = useDashboard();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => {
+    const fromUrl = searchParams.get("tab");
+    const valid: Tab[] = ["overview", "schedule", "lectures", "study", "deliverables", "tasks", "files"];
+    return fromUrl && (valid as string[]).includes(fromUrl) ? (fromUrl as Tab) : "overview";
+  });
 
   if (isPending) {
     return (

@@ -110,9 +110,6 @@ export function LibraryDashboard() {
   const dateLong = now.toLocaleDateString(localeCode, {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
-  const dateShort = now.toLocaleDateString(localeCode, {
-    weekday: "short", day: "2-digit", month: "short",
-  });
   const morningOf = now.toLocaleDateString(localeCode, { day: "numeric", month: "long" });
 
   const cw = semesterWeek(now, settings.data?.semester_start) ?? isoWeek(monday);
@@ -127,13 +124,12 @@ export function LibraryDashboard() {
             {semesterLabel && <>{t("library.term")} · <b>{semesterLabel}</b></>}
           </span>
           {institution && <span>{institution}</span>}
-          <span>{t("library.number")} <b>{pad(cw)}</b></span>
+          <span>{t("library.week")} <b>{pad(cw)}</b></span>
         </div>
         <h1 className="l-title0">{registerTitle}</h1>
         <div className="l-dek">{t("library.registerSub")}</div>
         <div className="l-rule-strip">
           <span>{dateLong}</span>
-          {semesterLabel && <span><b>{semesterLabel}</b> · {t("library.week")} <b>{pad(cw)}</b></span>}
           <span>{pad(now.getHours())}:{pad(now.getMinutes())}</span>
         </div>
       </header>
@@ -163,10 +159,6 @@ export function LibraryDashboard() {
               <span>{t("library.inRel", { rel: firstSlot.label.replace("+", "") })}</span>
             </div>
           )}
-        </div>
-        <div className="l-stamp">
-          <div className="l-date">{dateShort}</div>
-          <div>{pad(now.getHours())}:{pad(now.getMinutes())}</div>
         </div>
       </section>
 
@@ -382,8 +374,7 @@ function LibraryTableau({
     <div className="l-tableau">
       <div className="l-tgrid">
         <div className="l-th l-corner">
-          <div className="l-dow">{t("library.week")} · {ROMAN_UPPER[cw - 1] ?? pad(cw)}</div>
-          <div className="l-dn">{monday.toLocaleDateString(localeCode, { month: "short" }).toUpperCase()}</div>
+          <div className="l-dow">{t("library.week")} {ROMAN_UPPER[cw - 1] ?? pad(cw)}</div>
         </div>
         {days.map((day) => (
           <div key={day.i} className={"l-th" + (day.i === todayIdx ? " l-today" : "")}>
@@ -408,7 +399,8 @@ function LibraryTableau({
             {slots
               .filter((s) => s.weekday === day.i)
               .map((s) => (
-                <div key={s.id}
+                <Link key={s.id}
+                     to={`/courses/${s.course_code}?tab=schedule`}
                      className="l-event"
                      style={{
                        top: toTop(s.start_time.slice(0, 5)),
@@ -420,7 +412,7 @@ function LibraryTableau({
                     <span className="l-cc">{s.course_code}</span> · {s.kind}
                   </div>
                   {s.room && <div className="l-rm">— {s.room}</div>}
-                </div>
+                </Link>
               ))}
           </div>
         ))}

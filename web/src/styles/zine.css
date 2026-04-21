@@ -671,6 +671,8 @@ html[data-theme="zine"] ::selection { background: var(--z-yellow); color: var(--
   font-size: 11px;
   cursor: pointer;
   overflow: hidden;
+  text-decoration: none;
+  display: block;
   transition: transform 120ms ease;
   color: var(--z-ink);
 }

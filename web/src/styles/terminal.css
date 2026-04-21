@@ -464,8 +464,8 @@ html[data-theme="terminal"] ::selection {
 }
 [data-theme="terminal"] .tm-sched {
   display: grid;
-  grid-template-columns: 52px repeat(5, minmax(110px, 1fr));
-  min-width: 620px;
+  grid-template-columns: 72px repeat(5, minmax(110px, 1fr));
+  min-width: 640px;
   position: relative;
 }
 [data-theme="terminal"] .tm-sh {
@@ -500,6 +500,7 @@ html[data-theme="terminal"] ::selection {
   position: relative;
 }
 [data-theme="terminal"] .tm-rail .tm-hr span { position: absolute; top: -5px; right: 6px; }
+[data-theme="terminal"] .tm-rail .tm-hr:first-child span { top: 4px; }
 [data-theme="terminal"] .tm-col {
   position: relative;
   border-right: 1px solid var(--tm-line);
@@ -524,6 +525,9 @@ html[data-theme="terminal"] ::selection {
   font-size: 10.5px;
   cursor: pointer;
   overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
   transition: background 120ms linear;
 }
 [data-theme="terminal"] .tm-blk:hover { background: var(--tm-line); }

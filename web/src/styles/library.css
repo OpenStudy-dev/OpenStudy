@@ -302,7 +302,7 @@ html[data-theme="library"] ::selection { background: rgba(122,76,31,0.3); color:
   padding: 34px 0 26px;
   border-bottom: 1px solid var(--l-ink);
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 22px;
   align-items: end;
 }
@@ -659,6 +659,9 @@ html[data-theme="library"] ::selection { background: rgba(122,76,31,0.3); color:
   overflow: hidden;
   cursor: pointer;
   font-size: 11px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
   transition: background 120ms;
   color: var(--l-ink);
 }

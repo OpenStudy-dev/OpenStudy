@@ -441,7 +441,6 @@ function ZineWeek({
       <div className="z-week-inner">
         <div className="z-whead z-corner">
           <div className="z-dow">{wkLabel} {pad(cw)}</div>
-          <div className="z-dn">{monday.toLocaleDateString(localeCode, { month: "short" }).toUpperCase()}</div>
         </div>
         {days.map((day) => (
           <div key={day.i} className={"z-whead" + (day.i === todayIdx ? " z-today" : "")}>
@@ -464,7 +463,8 @@ function ZineWeek({
             {slots
               .filter((s) => s.weekday === day.i)
               .map((s) => (
-                <div key={s.id}
+                <Link key={s.id}
+                     to={`/courses/${s.course_code}?tab=schedule`}
                      className="z-wblk"
                      style={{
                        top: toTop(s.start_time.slice(0, 5)),
@@ -477,7 +477,7 @@ function ZineWeek({
                     <span className="z-kind">{s.kind}</span>
                   </div>
                   {s.room && <div className="z-rm">↳ {s.room}</div>}
-                </div>
+                </Link>
               ))}
           </div>
         ))}

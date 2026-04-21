@@ -85,15 +85,15 @@ Before any of the day-to-day stuff, I had to get a semester's worth of courses, 
 
 ### A typical week
 
-**During the lecture itself.** The prof introduces a topic I want more depth on without losing the thread of where the lecture is. I open Claude on my phone: *"I'm in ASB VL 4, slide 12 on the pumping lemma — expand on the intuition for why it works, complement what the prof is saying with more detail."* Claude calls `list_course_files`, finds the ASB VL 4 slides, uses `read_course_file` to fetch *just page 12*, reads the prof's actual definition, and explains from there — in sync with what I'm actually seeing on the projector.
+**During the lecture itself.** The prof introduces a topic I want more depth on without losing the thread of where the lecture is. I open Claude on my phone: *"I'm in ASB lecture 4, slide 12 on the pumping lemma — expand on the intuition for why it works, complement what the prof is saying with more detail."* Claude calls `list_course_files`, finds the ASB lecture 4 slides, uses `read_course_file` to fetch *just page 12*, reads the prof's actual definition, and explains from there — in sync with what I'm actually seeing on the projector.
 
-**Right after a lecture.** Walking out of class, I open Claude on my phone: *"We just finished VL 4 of ASB, covered pumping lemma, closure properties, and non-regularity of aⁿbⁿ."* Claude creates the lecture #4, adds the study topics with proper descriptions linked to lecture #4, marks it attended. couple of seconds. The dashboard is caught up.
+**Right after a lecture.** Walking out of class, I open Claude on my phone: *"We just finished lecture 4 of ASB, covered pumping lemma, closure properties, and non-regularity of aⁿbⁿ."* Claude creates the lecture #4, adds the study topics with proper descriptions linked to lecture #4, marks it attended. couple of seconds. The dashboard is caught up.
 
 **Later that day, I drop the slides in.** I upload the slides of the lecture to the app. Claude can now fetch and read the slides on demand (Through the MCP) and use them to teach me. (it can also fetch only the pages of the slides it needs to teach me, so it doesn't have to read the whole PDF).
 
 **Evening, sitting down to actually study.** *"Am I falling behind in anything?"* Claude pulls the fall-behind list — *"3 ASB topics unstudied, next lecture in 7h."* I pick the first one:
 
-> *"Walk me through pumping lemma §2.4. Pull the ASB VL4 slides and use the actual definition and example from there. Ask me a check question halfway through."*
+> *"Walk me through pumping lemma §2.4. Pull the ASB lecture 4 slides and use the actual definition and example from there. Ask me a check question halfway through."*
 
 Claude calls `list_study_topics` to find the topic row, `list_course_files` + `read_course_file` to fetch the slides (pages rendered to PNGs — Claude literally sees them, not OCR text), then teaches from the prof's slide wording. When it hits the check question I answer, it either corrects me or moves on. When I confirm I've got it: *"mark §2.4 studied,"* and Claude calls `mark_studied`.
 
@@ -200,7 +200,7 @@ claude mcp add --transport http --scope user \
 Both flows open your dashboard's login in a browser for the one-time OAuth consent. After that, the same 44 tools are live wherever you use Claude:
 
 - *"list my courses"* / *"what's due this week?"* / *"what did we cover in RN last week?"*
-- *"we just finished VL 3 of ASB, we covered topics X, Y, Z — create the lecture and topics"* → Claude calls `create_lecture` + `add_lecture_topics`
+- *"we just finished lecture 3 of ASB, we covered topics X, Y, Z — create the lecture and topics"* → Claude calls `create_lecture` + `add_lecture_topics`
 - *"mark chapter §1.4 as studied"* → `list_study_topics` + `mark_studied`
 - *"open the ASB lecture 2 slides and tell me what §0.1.3 is about"* → `list_course_files` + `read_course_file` (PDFs are rendered to PNGs and streamed back as vision — Claude literally sees the slides)
 - *"I'm falling behind in AML, help me prioritise"* → `get_fall_behind` + plan

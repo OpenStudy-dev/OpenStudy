@@ -13,14 +13,14 @@ export function Greeting({
   nextUp?: { code: CourseCode; at: Date } | null;
   subline?: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const settings = useAppSettings();
   const firstName =
     (settings.data?.display_name ?? "").split(" ")[0] ||
     t("dashboard.greetingFallbackName");
   const institution = settings.data?.institution ?? "";
   const semesterLabel = settings.data?.semester_label ?? "";
-  const locale = settings.data?.locale ?? "en-US";
+  const locale = i18n.language === "de" ? "de-DE" : "en-GB";
 
   const hour = now.getHours();
   const period =

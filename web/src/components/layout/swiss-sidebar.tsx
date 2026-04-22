@@ -1,5 +1,5 @@
 /**
- * Swiss sidebar — ported from docs/examples/study-dashboard-v6.html.
+ * Swiss sidebar — ported from docs/examples/openstudy-v6.html.
  * Renders when theme === "swiss". Omits invented "Saleh"/issue-number
  * branding and the fake status footer.
  */

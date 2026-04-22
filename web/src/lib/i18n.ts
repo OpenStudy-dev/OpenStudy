@@ -13,7 +13,7 @@ import de from "@/locales/de.json";
 
 export type AppLanguage = "en" | "de";
 
-const LS_KEY = "study-dashboard:lang";
+const LS_KEY = "openstudy:lang";
 
 export function languageFromLocale(locale: string | null | undefined): AppLanguage {
   if (!locale) return "en";
@@ -37,7 +37,7 @@ export function currentLanguage(): AppLanguage {
 
 /** Explicit user choice set via the picker. If true, the auto-sync from
  * settings.locale is ignored — the user's pick wins until they change it. */
-const MANUAL_KEY = "study-dashboard:lang-manual";
+const MANUAL_KEY = "openstudy:lang-manual";
 export function hasExplicitLanguage(): boolean {
   if (typeof localStorage === "undefined") return false;
   return localStorage.getItem(MANUAL_KEY) === "1";

@@ -1,4 +1,4 @@
--- Study dashboard schema v1
+-- OpenStudy schema v1
 -- Single-user app. We use the service_role key server-side, so RLS is
 -- defense-in-depth rather than the primary authz mechanism.
 

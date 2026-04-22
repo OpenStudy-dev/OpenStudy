@@ -1,4 +1,4 @@
-# Install study-dashboard
+# Install OpenStudy
 
 Step-by-step, from empty machine to a running dashboard with an MCP connector live in Claude.
 
@@ -73,8 +73,8 @@ You'll also need:
 ## 2. Clone + install deps
 
 ```bash
-git clone https://github.com/AmmarSaleh50/study-dashboard
-cd study-dashboard
+git clone https://github.com/openstudy-dev/OpenStudy
+cd OpenStudy
 
 uv sync                              # Python deps
 cd web && pnpm install && cd ..      # frontend deps
@@ -226,7 +226,7 @@ Once added on claude.ai, the same connector appears in the **Claude phone app** 
 
 ```bash
 claude mcp add --transport http --scope user \
-  study-dashboard https://<your-project>.vercel.app/mcp
+  openstudy https://<your-project>.vercel.app/mcp
 ```
 
 `--scope user` makes the connector available in every directory you run `claude` from. The CLI opens your browser for the OAuth flow on first use; the token's cached in `~/.claude.json`.

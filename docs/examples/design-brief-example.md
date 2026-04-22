@@ -1,6 +1,6 @@
-# study-dashboard — Claude Design brief
+# OpenStudy — Claude Design brief
 
-Redesign the frontend of **study-dashboard**, a personal study-management app. Make it look **fascinatingly nice** — distinctive, crafted, memorable. Not another generic SaaS dashboard. Think Linear × Raycast × Arc × a hand-bound Moleskine planner.
+Redesign the frontend of **OpenStudy**, a personal study-management app. Make it look **fascinatingly nice** — distinctive, crafted, memorable. Not another generic SaaS dashboard. Think Linear × Raycast × Arc × a hand-bound Moleskine planner.
 
 ## Context
 
@@ -12,7 +12,7 @@ Redesign the frontend of **study-dashboard**, a personal study-management app. M
 
 Before designing, please ingest:
 
-1. The codebase at `github.com/AmmarSaleh50/study-dashboard` — extract my current Tailwind tokens, component conventions, and color palette as the starting design system.
+1. The codebase at `github.com/openstudy-dev/OpenStudy` — extract my current Tailwind tokens, component conventions, and color palette as the starting design system.
 
 Keep the course codes **AML, ASB, RA, RN** and their existing accent colors as first-class identifiers.
 

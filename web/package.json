@@ -1,15 +1,15 @@
 {
-  "name": "study-dashboard-web",
+  "name": "openstudy-web",
   "private": true,
   "version": "0.0.0",
-  "description": "Frontend for the self-hosted study-dashboard app",
+  "description": "Frontend for the self-hosted OpenStudy app",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AmmarSaleh50/study-dashboard.git",
+    "url": "https://github.com/openstudy-dev/OpenStudy.git",
     "directory": "web"
   },
-  "homepage": "https://github.com/AmmarSaleh50/study-dashboard#readme",
+  "homepage": "https://github.com/openstudy-dev/OpenStudy#readme",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {

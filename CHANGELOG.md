@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to study-dashboard will be documented here.
+All notable changes to OpenStudy will be documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
@@ -63,7 +63,7 @@ cd web && pnpm install && pnpm build
 The migration adds `app_settings.theme` with default `'editorial'`, so
 existing rows land on the Classic theme until you pick something else.
 
-[v0.3.0]: https://github.com/AmmarSaleh50/study-dashboard/releases/tag/v0.3.0
+[v0.3.0]: https://github.com/openstudy-dev/OpenStudy/releases/tag/v0.3.0
 
 ## [v0.2.0] — 2026-04-20
 
@@ -125,7 +125,7 @@ npx supabase db push   # applies the English-canonical migration
 
 Then rebuild the frontend (`cd web && pnpm install && pnpm build`) and redeploy.
 
-[v0.2.0]: https://github.com/AmmarSaleh50/study-dashboard/releases/tag/v0.2.0
+[v0.2.0]: https://github.com/openstudy-dev/OpenStudy/releases/tag/v0.2.0
 
 ## [v0.1.0] — 2026-04-20
 
@@ -164,4 +164,4 @@ coursework.
 PRs on any of the above are welcome — see
 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-[v0.1.0]: https://github.com/AmmarSaleh50/study-dashboard/releases/tag/v0.1.0
+[v0.1.0]: https://github.com/openstudy-dev/OpenStudy/releases/tag/v0.1.0

@@ -1,5 +1,5 @@
 /**
- * Terminal-theme sidebar — ported from docs/examples/study-dashboard-v2.html.
+ * Terminal-theme sidebar — ported from docs/examples/openstudy-v2.html.
  * Renders instead of <Sidebar> when theme === "terminal".
  * Mirrors real data: courses, settings, dashboard counters.
  */

@@ -1,6 +1,6 @@
-# Claude.ai system prompt — a template for your study-dashboard connector
+# Claude.ai system prompt — a template for your OpenStudy connector
 
-This is a guide for turning Claude.ai into a hands-on study assistant that lives on top of your study-dashboard MCP connector. You paste a system prompt into a **claude.ai Project**, connect the MCP connector, and now every new chat in that Project has the rules + context baked in — so Claude consistently talks to your dashboard the way you want.
+This is a guide for turning Claude.ai into a hands-on study assistant that lives on top of your OpenStudy MCP connector. You paste a system prompt into a **claude.ai Project**, connect the MCP connector, and now every new chat in that Project has the rules + context baked in — so Claude consistently talks to your dashboard the way you want.
 
 ## What this does, in one paragraph
 
@@ -17,7 +17,7 @@ You'll need:
 ## Steps
 
 1. **Create a Project** in Claude.ai (left sidebar → Projects → New project). Name it whatever you want ("Fall 2026", "CS101", "Uni"…).
-2. **Enable your connector for the project**: Project → Settings → Connectors → toggle on your study-dashboard connector.
+2. **Enable your connector for the project**: Project → Settings → Connectors → toggle on your OpenStudy connector.
 3. **Paste the prompt below into Project Instructions** (Project → Settings → Custom instructions). Fill in the `{{PLACEHOLDERS}}` with your own values.
 4. Optionally **upload context files to Project Knowledge** (Project → + → Upload) — things like your syllabus PDFs, a notes page, a markdown file per course. Claude reads these on every message without you having to re-attach them.
 5. Start a new chat inside the Project and smoke-test: *"list my courses"*, *"what's due this week?"*, *"we just finished VL 3 of CS101, we covered topics X, Y, Z — create the lecture and topics"*.
@@ -29,7 +29,7 @@ Copy everything between the `--- START ---` and `--- END ---` markers and paste 
 ```markdown
 --- START ---
 
-You are {{USER_NAME}}'s study dashboard assistant. You help them capture, organise, and recall their coursework via the study-dashboard MCP connector — the single source of truth for their semester.
+You are {{USER_NAME}}'s OpenStudy assistant. You help them capture, organise, and recall their coursework via the OpenStudy MCP connector — the single source of truth for their semester.
 
 ## Who I am
 
@@ -92,7 +92,7 @@ When I say "we just finished VL 3 of {{CODE1}} covering topics X, Y, Z":
 ## What you can't do (constraints of the Claude.ai chat environment)
 
 You don't have a filesystem, git, bash, or editor access. You have:
-- The study-dashboard MCP connector (~45 tools).
+- The OpenStudy MCP connector (~45 tools).
 - Whatever I upload in this chat (images, PDFs, text).
 - The Project knowledge files.
 

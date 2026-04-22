@@ -12,7 +12,7 @@ anyio==4.13.0
     #   starlette
     #   watchfiles
 argon2-cffi==25.1.0
-    # via study-dashboard-api
+    # via openstudy-api
 argon2-cffi-bindings==25.1.0
     # via argon2-cffi
 attrs==26.1.0
@@ -38,7 +38,7 @@ cryptography==46.0.7
 deprecation==2.1.0
     # via postgrest
 fastapi==0.136.0
-    # via study-dashboard-api
+    # via openstudy-api
 h11==0.16.0
     # via
     #   httpcore
@@ -55,7 +55,7 @@ httpx==0.28.1
     # via
     #   mcp
     #   postgrest
-    #   study-dashboard-api
+    #   openstudy-api
 httpx-sse==0.4.3
     # via mcp
 hyperframe==6.1.0
@@ -66,21 +66,21 @@ idna==3.11
     #   httpx
     #   yarl
 itsdangerous==2.2.0
-    # via study-dashboard-api
+    # via openstudy-api
 jsonschema==4.26.0
     # via mcp
 jsonschema-specifications==2025.9.1
     # via jsonschema
 mcp==1.27.0
-    # via study-dashboard-api
+    # via openstudy-api
 multidict==6.7.1
     # via yarl
 packaging==26.1
     # via deprecation
 pillow==12.2.0
-    # via study-dashboard-api
+    # via openstudy-api
 postgrest==2.28.3
-    # via study-dashboard-api
+    # via openstudy-api
 propcache==0.4.1
     # via yarl
 pycparser==3.0 ; implementation_name != 'PyPy'
@@ -91,19 +91,19 @@ pydantic==2.13.2
     #   mcp
     #   postgrest
     #   pydantic-settings
-    #   study-dashboard-api
+    #   openstudy-api
 pydantic-core==2.46.2
     # via pydantic
 pydantic-settings==2.13.1
     # via
     #   mcp
-    #   study-dashboard-api
+    #   openstudy-api
 pyjwt==2.12.1
     # via mcp
 pymupdf==1.27.2.2
-    # via study-dashboard-api
+    # via openstudy-api
 python-dateutil==2.9.0.post0
-    # via study-dashboard-api
+    # via openstudy-api
 python-dotenv==1.2.2
     # via
     #   pydantic-settings
@@ -111,7 +111,7 @@ python-dotenv==1.2.2
 python-multipart==0.0.26
     # via
     #   mcp
-    #   study-dashboard-api
+    #   openstudy-api
 pywin32==311 ; sys_platform == 'win32'
     # via mcp
 pyyaml==6.0.3
@@ -150,11 +150,11 @@ typing-inspection==0.4.2
     #   pydantic
     #   pydantic-settings
 tzdata==2026.1
-    # via study-dashboard-api
+    # via openstudy-api
 uvicorn==0.44.0
     # via
     #   mcp
-    #   study-dashboard-api
+    #   openstudy-api
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
 watchfiles==1.1.1

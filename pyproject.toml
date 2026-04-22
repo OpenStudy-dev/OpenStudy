@@ -1,7 +1,7 @@
 [project]
-name = "study-dashboard-api"
+name = "openstudy-api"
 version = "0.3.0"
-description = "FastAPI backend for the study-dashboard app"
+description = "FastAPI backend for the OpenStudy app"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

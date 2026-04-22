@@ -1,5 +1,5 @@
 /**
- * SWISS GRID dashboard — ported from docs/examples/study-dashboard-v6.html.
+ * SWISS GRID dashboard — ported from docs/examples/openstudy-v6.html.
  * Active when theme === "swiss". Uses real API data. Omits invented design
  * flair: "№ 04" issue number, "Vol. II", weather tile, sidebar footer.
  */

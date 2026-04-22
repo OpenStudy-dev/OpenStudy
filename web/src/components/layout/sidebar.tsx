@@ -85,10 +85,10 @@ export function Sidebar() {
               className="font-serif text-[17px] font-medium leading-[1.1] truncate"
               style={{ fontVariationSettings: '"opsz" 72, "SOFT" 30' }}
             >
-              {displayName || "Study Dashboard"}
+              {displayName || "OpenStudy"}
             </div>
             <div className="font-mono text-[10px] text-subtle tracking-[0.1em] uppercase mt-[2px]">
-              {displayName ? "Study Dashboard" : "Set up your profile"}
+              {displayName ? "OpenStudy" : "Set up your profile"}
             </div>
           </div>
         </div>

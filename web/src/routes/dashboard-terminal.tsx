@@ -1,5 +1,5 @@
 /**
- * CYBERPUNK TERMINAL dashboard — ported from docs/examples/study-dashboard-v2.html
+ * CYBERPUNK TERMINAL dashboard — ported from docs/examples/openstudy-v2.html
  * Renders only when app theme === "terminal". Uses real API data.
  */
 import { useState } from "react";

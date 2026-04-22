@@ -1,5 +1,5 @@
 /**
- * LIBRARY (archival) dashboard — ported from docs/examples/study-dashboard-v4.html.
+ * LIBRARY (archival) dashboard — ported from docs/examples/openstudy-v4.html.
  * Renders when theme === "library". Uses real API data. Omits invented flair:
  * "Ex Libris" call numbers, weather, price tag, "est. MMXXIV", the printer's
  * colophon. Keeps the archival aesthetic: sepia palette, drop caps, roman

@@ -1,6 +1,6 @@
 /* ============================================================
    ZINE — pastel cream + pink/cyan/yellow stickers
-   ported from docs/examples/study-dashboard-v3.html
+   ported from docs/examples/openstudy-v3.html
    All selectors scoped under [data-theme="zine"] so they can't
    leak into other themes.
    ============================================================ */

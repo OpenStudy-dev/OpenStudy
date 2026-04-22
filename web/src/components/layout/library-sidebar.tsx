@@ -1,5 +1,5 @@
 /**
- * Library sidebar — ported from docs/examples/study-dashboard-v4.html.
+ * Library sidebar — ported from docs/examples/openstudy-v4.html.
  * Renders when theme === "library". Drops the invented "Ex Libris" call
  * number and fake overdue stamp; keeps the card-catalog plate + volumes.
  */

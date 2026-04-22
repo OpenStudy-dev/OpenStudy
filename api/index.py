@@ -1,7 +1,7 @@
 """Vercel Python entrypoint. Imports the FastAPI app from ../app/main.py.
 
 Layout:
-  study-dashboard/
+  OpenStudy/
     api/index.py          (this file — Vercel serverless function)
     app/main.py           (the actual FastAPI app)
     requirements.txt

@@ -41,7 +41,7 @@ export function normalizeTheme(raw: string | null | undefined): ThemeId {
   return (THEMES.find((t) => t.id === raw)?.id ?? DEFAULT_THEME) as ThemeId;
 }
 
-const STORAGE_KEY = "study-dashboard:theme";
+const STORAGE_KEY = "openstudy:theme";
 
 export function readStoredTheme(): ThemeId | null {
   if (typeof localStorage === "undefined") return null;

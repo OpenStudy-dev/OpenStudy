@@ -30,7 +30,7 @@ def create_app() -> FastAPI:
     mcp_app = build_mcp_http_app()
 
     app = FastAPI(
-        title="Study Dashboard API",
+        title="OpenStudy API",
         version="0.1.0",
         docs_url="/api/docs",
         redoc_url=None,

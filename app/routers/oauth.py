@@ -162,7 +162,7 @@ async def authorize(
 <body>
   <div class="card">
     <h1>Authorize access</h1>
-    <p><span class="name">{safe_name}</span> is asking to access your study dashboard on your behalf.</p>
+    <p><span class="name">{safe_name}</span> is asking to access your OpenStudy account on your behalf.</p>
     <p>Approving will allow it to:</p>
     <ul>
       <li>Read your courses, tasks, deliverables, lectures, and study topics</li>

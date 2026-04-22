@@ -486,7 +486,7 @@
     "noticeOfArrearsOn": "on",
     "noticeOfArrearsAcross": "across",
     "noticeOfArrearsBefore": "before this week's lectures.",
-    "youStudyDashboard": "STUDY DASHBOARD",
+    "youOpenStudy": "OPENSTUDY",
     "coursesRunstrip": "{{count}} COURSES",
     "nextRunstrip": "NEXT →",
     "tile": {

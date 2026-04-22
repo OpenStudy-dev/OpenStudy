@@ -1,4 +1,4 @@
-"""Study-dashboard MCP tool registration.
+"""OpenStudy MCP tool registration.
 
 All tools live in `register_tools(server)` so the HTTP entry
 (`app/mcp_http.py`, mounted at `/mcp`) registers the same catalog regardless
@@ -84,7 +84,7 @@ def _jsonable(obj: Any) -> Any:
 
 
 def register_tools(server: FastMCP) -> None:
-    """Register all study-dashboard tools on the given FastMCP instance."""
+    """Register all OpenStudy tools on the given FastMCP instance."""
 
     # ─────────────────────── Orientation ─────────────────────
 

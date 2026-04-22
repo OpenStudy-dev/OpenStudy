@@ -1,5 +1,5 @@
 /**
- * Zine-theme sidebar — ported from docs/examples/study-dashboard-v3.html.
+ * Zine-theme sidebar — ported from docs/examples/openstudy-v3.html.
  * Renders when app theme === "zine". Omits the pull-quote and side-foot
  * from the design since they're flavor-only without real data behind them.
  */

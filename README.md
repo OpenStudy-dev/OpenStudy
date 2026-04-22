@@ -1,6 +1,6 @@
 <p align="right"><sub><a href="#deutsch">🇩🇪 Auf Deutsch lesen ↓</a></sub></p>
 
-# study-dashboard
+# OpenStudy
 
 A self-hostable personal study dashboard. Track your **courses, schedule, lectures, study topics, deliverables, and tasks** in one place — and let **Claude** use the app from your **browser**, **phone**, **desktop**, or **Claude Code**.
 
@@ -38,11 +38,11 @@ A self-hostable personal study dashboard. Track your **courses, schedule, lectur
 
 Switch between all five in **Settings → Theme**. Each one is a full reskin of the dashboard, sidebar, and typography — not just a color palette.
 
-### Demo — Claude reading a lecture PDF straight out of study-dashboard
+### Demo — Claude reading a lecture PDF straight out of OpenStudy
 
 ![Claude reading a lecture PDF over MCP](docs/demo-mcp.gif)
 
-That's **claude.ai in the browser**, with the study-dashboard MCP server connected as a custom connector. No file was uploaded into the chat — Claude calls `list_course_files` to find the PDF **inside study-dashboard's own file store**, then `read_course_file` renders each page to a PNG and streams it back as vision input. Claude answers questions about the lecture while the PDF never leaves your self-hosted instance.
+That's **claude.ai in the browser**, with the OpenStudy MCP server connected as a custom connector. No file was uploaded into the chat — Claude calls `list_course_files` to find the PDF **inside OpenStudy's own file store**, then `read_course_file` renders each page to a PNG and streams it back as vision input. Claude answers questions about the lecture while the PDF never leaves your self-hosted instance.
 
 ## How I use this
 
@@ -130,8 +130,8 @@ Get the app running on your laptop against a free Supabase project. No deploy, n
 **1. Clone + install deps.**
 
 ```bash
-git clone https://github.com/AmmarSaleh50/study-dashboard
-cd study-dashboard
+git clone https://github.com/openstudy-dev/OpenStudy
+cd OpenStudy
 uv sync                              # Python deps
 cd web && pnpm install && cd ..      # frontend deps
 ```
@@ -194,7 +194,7 @@ Once the app is live at `https://your-project.vercel.app`, it serves a Streamabl
 
 # Claude Code (local CLI, any directory):
 claude mcp add --transport http --scope user \
-  study-dashboard https://your-project.vercel.app/mcp
+  openstudy https://your-project.vercel.app/mcp
 ```
 
 Both flows open your dashboard's login in a browser for the one-time OAuth consent. After that, the same 44 tools are live wherever you use Claude:
@@ -290,11 +290,11 @@ Ein self-hostbares, persönliches Studien-Dashboard. Behalte deine **Kurse, dein
 
 Unter **Einstellungen → Theme** zwischen allen fünf wechseln. Jedes ist ein vollständiger Reskin von Dashboard, Sidebar und Typografie — nicht bloss eine andere Farbpalette.
 
-### Demo — Claude liest ein Vorlesungs-PDF direkt aus study-dashboard
+### Demo — Claude liest ein Vorlesungs-PDF direkt aus OpenStudy
 
 ![Claude reading a lecture PDF over MCP](docs/demo-mcp.gif)
 
-Das ist **claude.ai im Browser**, mit dem study-dashboard-MCP-Server als Custom Connector angebunden. Es wurde nichts in den Chat hochgeladen — Claude ruft `list_course_files` auf, um das PDF **im Dateispeicher von study-dashboard selbst** zu finden, dann rendert `read_course_file` jede Seite als PNG und schickt sie als Vision-Input zurück. Claude beantwortet Fragen zur Vorlesung, ohne dass das PDF je deine selbst gehostete Instanz verlässt.
+Das ist **claude.ai im Browser**, mit dem OpenStudy-MCP-Server als Custom Connector angebunden. Es wurde nichts in den Chat hochgeladen — Claude ruft `list_course_files` auf, um das PDF **im Dateispeicher von OpenStudy selbst** zu finden, dann rendert `read_course_file` jede Seite als PNG und schickt sie als Vision-Input zurück. Claude beantwortet Fragen zur Vorlesung, ohne dass das PDF je deine selbst gehostete Instanz verlässt.
 
 ## Wie ich das benutze
 
@@ -382,8 +382,8 @@ Die App lokal gegen ein kostenloses Supabase-Projekt zum Laufen bringen. Kein De
 **1. Klonen + Deps installieren.**
 
 ```bash
-git clone https://github.com/AmmarSaleh50/study-dashboard
-cd study-dashboard
+git clone https://github.com/openstudy-dev/OpenStudy
+cd OpenStudy
 uv sync                              # Python-Deps
 cd web && pnpm install && cd ..      # Frontend-Deps
 ```
@@ -446,7 +446,7 @@ Sobald die App unter `https://your-project.vercel.app` läuft, stellt sie einen 
 
 # Claude Code (lokales CLI, jedes Verzeichnis):
 claude mcp add --transport http --scope user \
-  study-dashboard https://your-project.vercel.app/mcp
+  openstudy https://your-project.vercel.app/mcp
 ```
 
 Beide Flows öffnen den Login deines Dashboards im Browser fürs einmalige OAuth-Consent. Danach sind dieselben 44 Tools überall verfügbar, wo du Claude nutzt:

@@ -1,5 +1,5 @@
 /**
- * PASTEL ZINE dashboard — ported from docs/examples/study-dashboard-v3.html.
+ * PASTEL ZINE dashboard — ported from docs/examples/openstudy-v3.html.
  * Renders when app theme === "zine". Uses real API data. Invented
  * flavor from the design file (weather line, issue number, price tag,
  * pull-quote) is intentionally omitted — we only surface fields we
@@ -118,7 +118,7 @@ export function ZineDashboard() {
         <div className="z-logo">
           <div className="z-mark">{initials(displayName)}</div>
           <div className="z-words">
-            {firstName.toUpperCase()}<br />{t("zine.youStudyDashboard")}
+            {firstName.toUpperCase()}<br />{t("zine.youOpenStudy")}
             {institution && <small>{institution}</small>}
           </div>
         </div>

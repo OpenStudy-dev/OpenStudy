@@ -56,7 +56,7 @@ There's no automated test suite yet (honest). Until there is:
 
 - For backend changes: exercise the changed endpoint(s) manually via `curl` or the `/api/docs` Swagger UI, and check that the data round-trips through Supabase.
 - For frontend changes: run `pnpm build` to make sure TypeScript is still happy, then manually click through the affected views in `pnpm dev`.
-- For MCP tool changes: start the backend (`uv run uvicorn app.main:app --reload`), then either hit the tool via a `POST /mcp` JSON-RPC request with your bearer token (see `curl` snippet in `INSTALL.md`), or register the local endpoint with Claude Code (`claude mcp add --transport http study-dashboard-dev http://localhost:8000/mcp`) and call the tool in chat.
+- For MCP tool changes: start the backend (`uv run uvicorn app.main:app --reload`), then either hit the tool via a `POST /mcp` JSON-RPC request with your bearer token (see `curl` snippet in `INSTALL.md`), or register the local endpoint with Claude Code (`claude mcp add --transport http openstudy-local http://localhost:8000/mcp`) and call the tool in chat.
 
 If you're up for adding test infrastructure (pytest + a Supabase mock, Vitest for the frontend), that itself is a welcome PR.
 

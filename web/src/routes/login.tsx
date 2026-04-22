@@ -48,7 +48,7 @@ export default function Login() {
       <div className="w-full max-w-sm flex flex-col items-center">
         <div className="mb-8 text-center">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-            {t("login.brand", "Study dashboard")}
+            {t("login.brand", "OpenStudy")}
           </h1>
         </div>
 

@@ -1,4 +1,4 @@
-"""HTTP Streamable transport for the study-dashboard MCP server.
+"""HTTP Streamable transport for the OpenStudy MCP server.
 
 Mounted under `/mcp` in app/main.py. Reuses app.mcp_tools.register_tools
 to wire every tool onto the FastMCP instance.
@@ -109,7 +109,7 @@ class _AutoStartMcpApp:
 
 
 _SERVER_INSTRUCTIONS = """\
-Personal study dashboard. Tracks a student's courses and everything attached \
+OpenStudy — personal study dashboard. Tracks a student's courses and everything attached \
 to them: weekly schedule slots, individual lecture sessions, atomic study \
 topics, graded deliverables, end-of-semester exams, personal tasks, and an \
 activity log.
@@ -163,7 +163,7 @@ def _build_server() -> FastMCP:
     origin = _public_origin()
     resource_url = f"{origin}/mcp"
     server = FastMCP(
-        "study-dashboard",
+        "openstudy",
         instructions=_SERVER_INSTRUCTIONS,
         token_verifier=SupabaseTokenVerifier(resource_url),
         auth=AuthSettings(

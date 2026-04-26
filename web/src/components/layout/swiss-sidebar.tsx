@@ -7,8 +7,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppSettings, useCourses } from "@/lib/queries";
-import { Wordmark } from "@/components/brand/wordmark";
-
 function cv(code: string) { return `var(--course-${code.toLowerCase()})`; }
 function pad(n: number) { return String(n).padStart(2, "0"); }
 
@@ -125,18 +123,6 @@ export function SwissSidebar() {
         <span>{t("nav.settings")}</span>
       </SLink>
 
-      <div
-        style={{
-          marginTop: "auto",
-          paddingTop: 24,
-          paddingBottom: 8,
-          display: "flex",
-          justifyContent: "center",
-          opacity: 0.4,
-        }}
-      >
-        <Wordmark style={{ height: 18, width: "auto" }} />
-      </div>
     </aside>
   );
 }

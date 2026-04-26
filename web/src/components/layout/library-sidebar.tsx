@@ -7,8 +7,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppSettings, useCourses } from "@/lib/queries";
-import { Wordmark } from "@/components/brand/wordmark";
-
 function cv(code: string) { return `var(--course-${code.toLowerCase()})`; }
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
@@ -105,17 +103,6 @@ export function LibrarySidebar() {
         <span className="l-nm">{t("nav.settings")}</span>
       </LLink>
 
-      <div
-        style={{
-          marginTop: "auto",
-          padding: "18px 0 8px",
-          display: "flex",
-          justifyContent: "center",
-          opacity: 0.4,
-        }}
-      >
-        <Wordmark style={{ height: 18, width: "auto" }} />
-      </div>
     </aside>
   );
 }

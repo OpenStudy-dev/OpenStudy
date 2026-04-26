@@ -7,8 +7,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAppSettings, useCourses, useDashboard } from "@/lib/queries";
-import { Wordmark } from "@/components/brand/wordmark";
-
 function courseVar(code: string) {
   return `var(--course-${code.toLowerCase()})`;
 }
@@ -166,18 +164,6 @@ export function TerminalSidebar() {
         </TmLink>
       </div>
 
-      <div
-        style={{
-          marginTop: "auto",
-          paddingTop: 18,
-          paddingBottom: 10,
-          display: "flex",
-          justifyContent: "center",
-          opacity: 0.4,
-        }}
-      >
-        <Wordmark style={{ height: 18, width: "auto" }} />
-      </div>
     </aside>
   );
 }

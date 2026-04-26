@@ -14,7 +14,6 @@ import { courseAccentVar } from "@/lib/theme";
 import { cn } from "@/lib/cn";
 import type { CourseCode } from "@/data/types";
 import { semesterWeek } from "@/lib/time";
-import { Wordmark } from "@/components/brand/wordmark";
 
 function deriveMonogram(name: string | null | undefined, fallback: string): string {
   if (!name) return fallback;
@@ -195,9 +194,6 @@ export function Sidebar() {
         </NavSection>
       </div>
 
-      <div className="px-4 py-3 border-t border-hairline flex items-center justify-center text-subtle">
-        <Wordmark className="h-[18px] opacity-60" />
-      </div>
     </aside>
   );
 }

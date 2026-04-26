@@ -7,6 +7,10 @@
     <!-- Canonical + indexing hints -->
     <link rel="canonical" href="%VITE_SITE_URL%/" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
+    <!-- Google Search Console site verification token (set PUBLIC_GOOGLE_SITE_VERIFICATION
+         in .env.docker → flows through to VITE_GOOGLE_SITE_VERIFICATION at build time).
+         Empty content tag is harmless if unset. -->
+    <meta name="google-site-verification" content="%VITE_GOOGLE_SITE_VERIFICATION%" />
 
     <!-- Icons: theme-aware SVG wins the browser tab; PNG tile only for Google search + PWA + Apple home screen -->
     <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg" />

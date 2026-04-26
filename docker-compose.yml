@@ -129,6 +129,10 @@ services:
         VITE_SITE_URL: "${PUBLIC_SITE_URL:-http://localhost:8080}"
         VITE_SITE_NAME: "${PUBLIC_SITE_NAME:-OpenStudy}"
         VITE_SHOW_LANDING: "${PUBLIC_SHOW_LANDING:-false}"
+        # Google Search Console verification token (paste from Search Console's
+        # "HTML tag" verification — the value of `content="..."`). Empty by
+        # default so forks aren't carrying the upstream owner's token.
+        VITE_GOOGLE_SITE_VERIFICATION: "${PUBLIC_GOOGLE_SITE_VERIFICATION:-}"
     image: openstudy-frontend:latest
     container_name: openstudy-frontend
     restart: unless-stopped

@@ -49,10 +49,11 @@ writeFileSync(
 
 User-agent: *
 Allow: /
+Allow: /.well-known/security.txt
 Disallow: /api/
 Disallow: /mcp/
 Disallow: /oauth/
-Disallow: /.well-known/
+Disallow: /.well-known/oauth-
 Disallow: /login
 
 Sitemap: ${SITE_URL}/sitemap.xml

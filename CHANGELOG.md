@@ -4,6 +4,103 @@ All notable changes to OpenStudy will be documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] — 2026-04-29
+
+**Internal hardening.** No user-visible feature changes. The PostgREST
+service is gone — FastAPI now talks to Postgres directly via a `psycopg`
+async pool — and the project finally has a real backend test suite (213
+tests against a real Postgres testcontainer with per-test transaction
+rollback). Plus a handful of correctness + security fixes surfaced by
+the post-migration audits.
+
+### Changed — architecture
+- **Dropped PostgREST.** Backend services now use `psycopg[pool]` async
+  pool directly. Pool is opened/closed in the FastAPI lifespan; every
+  service module migrated to the new helpers (`db.fetch`, `db.fetchrow`,
+  `db.fetchval`, `db.execute`, `db.db()`). One fewer container, one
+  fewer hop, simpler error model. `POSTGREST_URL` / `POSTGREST_API_KEY` /
+  `POSTGREST_AUTH` env vars removed; the pool reads `DATABASE_URL`
+  directly. Stack is now three containers (postgres + openstudy +
+  frontend), not four.
+- **Auth code consumption is now atomic.** `oauth_svc.consume_auth_code`
+  uses a single `DELETE … RETURNING *` rather than SELECT-then-UPDATE,
+  closing the previous TOCTOU window where two parallel callers could
+  both succeed with the same code.
+- **Lecture-topics insertion is now transactional.** `add_lecture_topics`
+  wraps the optional lecture create + every topic insert in one psycopg
+  transaction — partial-failure rollback is now guaranteed.
+- **`/api/health` no longer blocks the event loop.** Storage stat call
+  moved off the request thread.
+- **Rate limiter prefers `CF-Connecting-IP`** over `X-Forwarded-For` —
+  Cloudflare's header is unspoofable from outside the tunnel; XFF is.
+
+### Added — test infrastructure
+- **pytest + testcontainers-postgres** with a per-test transaction
+  rollback shim (`force_rollback=True` + a `_TxnPool` connection pin)
+  so every test gets a clean DB without paying for container churn.
+- **213 backend tests:** ~145 service-layer + 60 MCP-tool tests across
+  11 files (one per entity family) + 5 helper unit tests + 3 multi-step
+  end-to-end scenarios (`test_integration_full_flow.py` — full OAuth
+  lifecycle, login rate-limit, TOTP enroll+login).
+- **`app/services/_helpers.py::validated_cols`** — filters dict keys to
+  Pydantic-declared schema fields before f-stringing into INSERT/UPDATE
+  SQL. Defence in depth against future schema bugs that might inject
+  unexpected keys; applied at all 16 patch/insert sites across 7 service
+  files.
+
+### Added — OAuth
+- **`POST /oauth/revoke`** (RFC 7009) — public clients call this on
+  logout. Endpoint is now advertised in `/.well-known/oauth-authorization-server`
+  via `revocation_endpoint` and `revocation_endpoint_auth_methods_supported`.
+
+### Fixed
+- **`update_settings` patch flow** no longer overwrites valid timezone /
+  locale fields with NULL when the caller passes `None` for unset
+  parameters. The MCP `update_app_settings` tool was passing every
+  parameter (including unset ones) through to `AppSettingsPatch`;
+  `model_dump(exclude_none=True)` now matches the convention used by
+  every other patch service. Surfaced by the new MCP-tool tests.
+- **`update_settings` fallback insert** uses `ON CONFLICT (id) DO UPDATE`,
+  so two concurrent first-callers don't race the PK constraint into a 500.
+- **`/api/auth/totp/setup`** is now an upsert. On a fresh DB without an
+  `app_settings` row, the previous bare UPDATE matched zero rows but
+  returned 200 with a generated secret — `/totp/enable` then 400'd.
+- **`consume_auth_code` rejects non-S256 PKCE** unconditionally. OAuth
+  2.1 mandates S256; the previous code accepted `plain` if a code row
+  somehow stored that method, which a direct POST to `/oauth/consent`
+  could trigger by skipping the `/authorize` S256 check.
+- **`record_event` ordering tie-breaker.** Two events inserted in the
+  same transaction shared `created_at = now()` (transaction-scoped);
+  switched to `clock_timestamp()` and added `id DESC` to the ORDER BY.
+- **`storage._log` savepoint.** Wrapped the activity-log insert in an
+  inner transaction so swallowed FK violations don't poison the outer
+  request transaction.
+- **Pool-level UUID loader.** psycopg returns UUID columns as `uuid.UUID`
+  by default; Pydantic schemas expect `str`. Registered a text + binary
+  protocol loader on the pool so every fetch returns strings, no
+  per-service conversions.
+
+### Removed
+- **`postgrest-py` dependency.** Gone from `pyproject.toml` /
+  `uv.lock`.
+- **PostgREST container** from `docker-compose.yml`.
+- **`app.db.client()` and the legacy postgrest helper.** All call sites
+  migrated.
+
+### Migration notes (upgrading from v0.5.0)
+
+If you're running a v0.5.0 deploy:
+
+1. Pull the new code, then run `./deploy.sh`. The deploy script now
+   runs with `--remove-orphans` so the PostgREST container is cleaned
+   up automatically.
+2. `DATABASE_URL` must be set (it already was for migrations; nothing
+   new here). `POSTGREST_URL` / `POSTGREST_API_KEY` / `POSTGREST_AUTH`
+   are no longer read — safe to remove from `.env`.
+3. No schema changes. The migration runner has nothing new to apply.
+
+[v0.6.0]: https://github.com/openstudy-dev/OpenStudy/releases/tag/v0.6.0
+
 ## [v0.5.0] — 2026-04-26
 
 **Self-hosted by default.** Big architectural shift: OpenStudy no longer

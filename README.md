@@ -120,12 +120,12 @@ Plug it into Claude.ai as a custom connector (full OAuth 2.1) and those tools ar
 
 Before you start, have:
 
-- **Docker** + **Docker Compose v2.30+** (the stack — Postgres, PostgREST, the FastAPI — all run as containers)
+- **Docker** + **Docker Compose v2.30+** (the stack — Postgres, FastAPI, frontend — all run as containers)
 - **Node 20+** and **pnpm** (via [corepack](https://pnpm.io/installation#using-corepack)) for building the frontend
 - A **public hostname pointing at your box** if you want Claude.ai or the Claude iOS app to reach the MCP endpoint (Claude Code can use `localhost`)
 - **~15 minutes** for first-time setup
 
-The whole stack — Postgres, PostgREST, the FastAPI backend, and the static frontend — runs on a single box. Anything that runs Docker works: a €5/mo VPS is plenty.
+The whole stack — Postgres, the FastAPI backend, and the static frontend — runs on a single box. Anything that runs Docker works: a €5/mo VPS is plenty.
 
 ## Quick start
 
@@ -159,7 +159,7 @@ EOF
 chmod 600 .env.docker
 ```
 
-`.env` holds your application secrets (password hash, session secret, optional Telegram tokens). `.env.docker` holds the Postgres credentials that compose injects into the postgres + postgrest containers. Both are in `.gitignore`.
+`.env` holds your application secrets (password hash, session secret, optional Telegram tokens). `.env.docker` holds the Postgres credentials that compose injects into the postgres container. Both are in `.gitignore`.
 
 **3. Bring up the stack.**
 
@@ -244,7 +244,7 @@ web/
   src/              Vite + React 19 + Tailwind + shadcn/ui frontend
 scripts/
   run_migrations.py Idempotent migration runner with checksum tracking
-docker-compose.yml  Postgres + PostgREST + FastAPI on an internal network
+docker-compose.yml  Postgres + FastAPI on an internal network
 Dockerfile          Builds the openstudy:latest image
 deploy.sh           Build → migrate → roll → health-gate → rollback-on-fail
 docs/
@@ -254,11 +254,11 @@ docs/
 
 ## Stack
 
-Four containers behind a single host-side reverse proxy:
+Three containers behind a single host-side reverse proxy:
 
 - **Frontend:** Vite + React 19 + TypeScript + Tailwind + shadcn/ui, built into a Caddy:alpine image that serves the SPA and proxies API traffic to the backend on the internal docker network
-- **Backend:** FastAPI (Python 3.12) running as one uvicorn worker
-- **Data:** Postgres 16 + PostgREST 12 (both internal-network only — never exposed to the host)
+- **Backend:** FastAPI (Python 3.12) running as one uvicorn worker, talking to Postgres directly via `psycopg` async pool
+- **Data:** Postgres 16 (internal-network only — never exposed to the host)
 - **Files:** plain filesystem under `STUDY_ROOT` (default `/opt/courses`), bind-mounted into the FastAPI container
 - **MCP:** Python `mcp` SDK, mounted at `/mcp` over Streamable HTTP with OAuth 2.1
 - **Hosting:** anywhere Docker runs — bring your own outer reverse proxy (Caddy in [INSTALL.md](./INSTALL.md)) for TLS termination
@@ -394,12 +394,12 @@ Stöpsel den Connector in Claude.ai (voller OAuth 2.1) und dieselben Tools sind 
 
 Bevor es losgeht, solltest du haben:
 
-- **Docker** + **Docker Compose v2.30+** (der ganze Stack — Postgres, PostgREST, das FastAPI-Backend — läuft als Container)
+- **Docker** + **Docker Compose v2.30+** (der ganze Stack — Postgres, FastAPI-Backend, Frontend — läuft als Container)
 - **Node 20+** und **pnpm** (via [corepack](https://pnpm.io/installation#using-corepack)) zum Bauen des Frontends
 - Einen **öffentlichen Hostnamen, der auf deine Box zeigt**, falls Claude.ai oder die Claude-iOS-App den MCP-Endpoint erreichen sollen (Claude Code geht auch mit `localhost`)
 - **~15 Minuten** fürs erste Setup
 
-Der komplette Stack — Postgres, PostgREST, FastAPI-Backend, statisches Frontend — läuft auf einer einzigen Box. Alles, worauf Docker läuft, reicht: ein 5 €/Monat-VPS hat genug Power.
+Der komplette Stack — Postgres, FastAPI-Backend, statisches Frontend — läuft auf einer einzigen Box. Alles, worauf Docker läuft, reicht: ein 5 €/Monat-VPS hat genug Power.
 
 ## Quick Start
 
@@ -433,7 +433,7 @@ EOF
 chmod 600 .env.docker
 ```
 
-`.env` enthält deine App-Secrets (Passwort-Hash, Session-Secret, optional Telegram-Tokens). `.env.docker` enthält die Postgres-Credentials, die Compose in die Postgres- und PostgREST-Container injiziert. Beide sind in `.gitignore`.
+`.env` enthält deine App-Secrets (Passwort-Hash, Session-Secret, optional Telegram-Tokens). `.env.docker` enthält die Postgres-Credentials, die Compose in den Postgres-Container injiziert. Beide sind in `.gitignore`.
 
 **3. Stack starten.**
 
@@ -519,7 +519,7 @@ web/
   src/              Vite + React 19 + Tailwind + shadcn/ui Frontend
 scripts/
   run_migrations.py Idempotenter Migrations-Runner mit Checksum-Tracking
-docker-compose.yml  Postgres + PostgREST + FastAPI auf einem internen Netzwerk
+docker-compose.yml  Postgres + FastAPI auf einem internen Netzwerk
 Dockerfile          Baut das openstudy:latest-Image
 deploy.sh           Build → Migrate → Roll → Health-Gate → Auto-Rollback
 docs/
@@ -529,11 +529,11 @@ docs/
 
 ## Stack
 
-Vier Container hinter einem einzelnen Reverse Proxy auf dem Host:
+Drei Container hinter einem einzelnen Reverse Proxy auf dem Host:
 
 - **Frontend:** Vite + React 19 + TypeScript + Tailwind + shadcn/ui, gebaut in ein Caddy:alpine-Image, das die SPA ausliefert und API-Traffic an das Backend im internen Docker-Netzwerk durchreicht
-- **Backend:** FastAPI (Python 3.12) als ein uvicorn-Worker
-- **Daten:** Postgres 16 + PostgREST 12 (beide nur im internen Netzwerk — nie zum Host exponiert)
+- **Backend:** FastAPI (Python 3.12) als ein uvicorn-Worker, spricht direkt mit Postgres über einen `psycopg`-Async-Pool
+- **Daten:** Postgres 16 (nur im internen Netzwerk — nie zum Host exponiert)
 - **Dateien:** plain Filesystem unter `STUDY_ROOT` (Default `/opt/courses`), per Bind-Mount in den FastAPI-Container
 - **MCP:** Python-`mcp`-SDK, gemountet unter `/mcp` über Streamable HTTP mit OAuth 2.1
 - **Hosting:** überall, wo Docker läuft — äußerer Reverse Proxy (Caddy in [INSTALL.md](./INSTALL.md)) übernimmt TLS

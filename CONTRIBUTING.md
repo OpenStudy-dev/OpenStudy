@@ -56,13 +56,18 @@ cd web && pnpm install && pnpm dev
 
 ## Testing
 
-There's no automated test suite yet (honest). Until there is:
+The backend has a pytest suite (213 tests as of v0.6.0) that runs against a real Postgres testcontainer with per-test transaction rollback — every test gets a clean DB state without paying for container churn. Service-layer, MCP-tool, and end-to-end OAuth/login flows are all covered.
 
-- For backend changes: rebuild + restart the openstudy container (`./deploy.sh`), then exercise the changed endpoint(s) manually via `curl` or the `/api/docs` Swagger UI.
-- For frontend changes: run `pnpm build` to make sure TypeScript is still happy, then manually click through the affected views in `pnpm dev`.
-- For MCP tool changes: rebuild via `./deploy.sh`, then either hit the tool via a `POST /mcp` JSON-RPC request with your bearer token, or register the local endpoint with Claude Code (`claude mcp add --transport http openstudy-local http://localhost:8000/mcp`) and call the tool in chat.
+```bash
+uv run --no-sync pytest -q              # full suite
+uv run --no-sync pytest tests/mcp -x    # just the MCP tool tests
+```
 
-If you're up for adding test infrastructure (pytest + a Postgres testcontainer, Vitest for the frontend), that itself is a welcome PR.
+The frontend has no automated tests yet. For frontend changes, run `pnpm build` to make sure TypeScript is still happy, then manually click through the affected views in `pnpm dev`.
+
+For MCP tool changes specifically: write a happy-path test in `tests/mcp/test_<entity>.py` matching the existing pattern (it's just `await get_tool_fn(server, "tool_name")(**kwargs)`), then `./deploy.sh` and exercise it from Claude Code (`claude mcp add --transport http openstudy-local http://localhost:8000/mcp`) to confirm the wire-level call works too.
+
+A frontend Vitest suite is still on the wishlist — PRs welcome.
 
 ## Submitting a PR
 

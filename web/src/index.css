@@ -82,28 +82,6 @@
      (ink-dot display, base font size) are toggled explicitly.
      ================================================================ */
 
-  /* ── Minimal: single typeface (Inter), no serif headings, no dots. ── */
-  :root[data-theme="minimal"] {
-    /* Slightly cooler neutrals; rebinding serif → sans kills Fraunces */
-    --bg-c:           0.16 0.003 260;
-    --surface-c:      0.20 0.003 260;
-    --surface-2-c:    0.24 0.003 260;
-    --surface-3-c:    0.28 0.003 260;
-    --border-c:       0.32 0.003 260;
-    --border-strong-c:0.40 0.003 260;
-    --hairline-c:     0.40 0.003 260;
-    --fg-c:           0.97 0 0;
-    --fg-dim-c:       0.86 0 0;
-    --muted-c:        0.65 0 0;
-    --subtle-c:       0.50 0 0;
-
-    --font-serif: var(--font-sans);
-    --ink-dot-display: none;
-    --radius: 8px;
-    --radius-sm: 5px;
-    --radius-lg: 10px;
-  }
-
   /* ── Terminal: mono everywhere, amber on near-black. ── */
   :root[data-theme="terminal"] {
     --bg-c:           0.12 0.003 60;
@@ -131,16 +109,6 @@
     --radius: 3px;
     --radius-sm: 2px;
     --radius-lg: 4px;
-  }
-
-  /* ── Dense: same palette, smaller type, tighter radii. ── */
-  :root[data-theme="dense"] {
-    --font-serif: var(--font-sans);
-    --ink-dot-display: none;
-    --base-font-size: 12.5px;
-    --radius: 6px;
-    --radius-sm: 4px;
-    --radius-lg: 8px;
   }
 
   html {

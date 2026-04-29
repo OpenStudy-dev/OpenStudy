@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     session_secret: str = Field(default="")
     session_ttl_days: int = 30
 
+    # Expose FastAPI's auto-generated /api/docs (Swagger UI) + /api/openapi.json.
+    # Default OFF — they're recon assist for attackers. Set EXPOSE_DOCS=true
+    # in dev .env if you want them. Production should always be false.
+    expose_docs: bool = False
+
     # Public origin (scheme+host, no trailing slash) — required for OAuth/MCP URLs.
     # In prod, set to your public origin (e.g. https://openstudy.dev).
     public_url: str = ""

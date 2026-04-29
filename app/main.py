@@ -39,12 +39,15 @@ def create_app() -> FastAPI:
     # runtimes that don't fire ASGI lifespan events at all.
     mcp_app = build_mcp_http_app()
 
+    # /api/docs (Swagger UI) and /api/openapi.json off by default. The schema
+    # is recon assist for any attacker enumerating attack surface. Flip on
+    # via EXPOSE_DOCS=true in .env when working locally.
     app = FastAPI(
         title="OpenStudy API",
         version="0.1.0",
-        docs_url="/api/docs",
+        docs_url="/api/docs" if settings.expose_docs else None,
         redoc_url=None,
-        openapi_url="/api/openapi.json",
+        openapi_url="/api/openapi.json" if settings.expose_docs else None,
     )
 
     app.add_middleware(

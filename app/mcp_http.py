@@ -14,6 +14,7 @@ in process-level state for the lifetime of the warm Lambda.
 from __future__ import annotations
 
 import asyncio
+import logging
 from contextlib import AsyncExitStack
 from typing import Any, Optional
 
@@ -25,6 +26,8 @@ from mcp.server.transport_security import TransportSecuritySettings
 from .config import get_settings
 from .mcp_tools import register_tools
 from .services import oauth as oauth_svc
+
+log = logging.getLogger(__name__)
 
 
 class PostgrestTokenVerifier(TokenVerifier):
@@ -92,12 +95,13 @@ class _AutoStartMcpApp:
         try:
             await self._ensure_started()
             await self._inner(scope, receive, send)
-        except Exception as exc:
-            import traceback
-            body = (
-                f"MCP handler error: {type(exc).__name__}: {exc}\n\n"
-                + traceback.format_exc()
-            ).encode("utf-8")
+        except Exception:
+            # Log the full traceback server-side so we can debug, but
+            # NEVER return it to the client — it can leak internal paths,
+            # DSN fragments, env values that wound up in error messages,
+            # version info, etc. Clients see a generic 500.
+            log.exception("MCP handler error")
+            body = b"MCP handler error. Server-side details have been logged."
             await send(
                 {
                     "type": "http.response.start",
@@ -208,12 +212,12 @@ async def _per_request_mcp_app(scope, receive, send) -> None:
         inner = server.streamable_http_app()
         async with inner.router.lifespan_context(inner):
             await inner(scope, receive, send)
-    except Exception as exc:
-        import traceback
-        body = (
-            f"MCP handler error: {type(exc).__name__}: {exc}\n\n"
-            + traceback.format_exc()
-        ).encode("utf-8")
+    except Exception:
+        # Same pattern as `_AutoStartMcpApp.__call__`: log server-side, never
+        # echo the traceback to the client (it can leak internal paths, DSN
+        # fragments, env values that wound up in error messages, etc.).
+        log.exception("MCP handler error (per-request)")
+        body = b"MCP handler error. Server-side details have been logged."
         try:
             await send(
                 {

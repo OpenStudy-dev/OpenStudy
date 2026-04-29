@@ -1,5 +1,6 @@
 from .. import db
 from ..schemas import AppSettings, AppSettingsPatch
+from ._helpers import validated_cols
 
 
 SETTINGS_PK = 1
@@ -28,7 +29,7 @@ async def update_settings(patch: AppSettingsPatch) -> AppSettings:
 
     # Build SET clause: "key1 = %s, key2 = %s, …". Column names come from
     # the Pydantic schema (not user input), so f-string interpolation is safe.
-    cols = list(data.keys())
+    cols = validated_cols(AppSettingsPatch, data)
     set_clause = ", ".join(f"{c} = %s" for c in cols)
     values = [data[c] for c in cols]
 

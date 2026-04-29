@@ -41,15 +41,50 @@ def _safe_resolve(rel: str) -> Path:
     return target
 
 
+def _course_code_from_path(p: str | None) -> str | None:
+    """Extract the leading path segment as a course code if it looks like one.
+    Convention: paths under STUDY_ROOT are `<COURSE_CODE>/...` where
+    COURSE_CODE is uppercase letters/digits/dashes. Returns None if the path
+    doesn't match (e.g. empty list-prefix, or a top-level file)."""
+    if not p:
+        return None
+    first = p.lstrip("/").split("/", 1)[0]
+    # Match the convention: 2-12 chars, uppercase letters/digits/dash.
+    # Don't be too lax — we'd rather log course_code=NULL than a bogus value.
+    if 2 <= len(first) <= 12 and first == first.upper() and all(
+        c.isalnum() or c == "-" for c in first
+    ):
+        return first
+    return None
+
+
 def _log(kind: str, payload: dict[str, Any]) -> None:
     """Best-effort event log. Lazy import of db to avoid circular imports
-    and to never break a storage op when the DB is having a moment."""
+    and to never break a storage op when the DB is having a moment.
+
+    Extracts course_code from the payload's first path-shaped value (path,
+    prefix, source, or first of paths[]). The events table has a
+    course_code column that's been silently NULL for every storage event
+    since v0.5.0 — fixed here so the activity log can filter by course."""
+    # Find the first path-shaped value in the payload to derive course_code.
+    candidate: str | None = None
+    for key in ("path", "prefix", "source", "destination", "from", "to"):
+        if key in payload and isinstance(payload[key], str):
+            candidate = payload[key]
+            break
+    if candidate is None and isinstance(payload.get("paths"), list) and payload["paths"]:
+        first_path = payload["paths"][0]
+        if isinstance(first_path, str):
+            candidate = first_path
+
     try:
         from ..db import client
 
-        client().table("events").insert(
-            {"kind": kind, "payload": payload}
-        ).execute()
+        row: dict[str, Any] = {"kind": kind, "payload": payload}
+        course_code = _course_code_from_path(candidate)
+        if course_code:
+            row["course_code"] = course_code
+        client().table("events").insert(row).execute()
     except Exception:
         pass
 

@@ -13,7 +13,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_health_returns_ok_with_db_and_storage(client, db_pool, tmp_path, monkeypatch):
+async def test_health_returns_ok_with_db_and_storage(client, db_conn, tmp_path, monkeypatch):
     """Health check must report db=ok and storage=ok with no `coroutine` reprs."""
     monkeypatch.setenv("STUDY_ROOT", str(tmp_path))
     resp = await client.get("/api/health")
@@ -25,7 +25,7 @@ async def test_health_returns_ok_with_db_and_storage(client, db_pool, tmp_path, 
 
 
 @pytest.mark.asyncio
-async def test_dashboard_aggregates_every_service(db_pool, monkeypatch):
+async def test_dashboard_aggregates_every_service(db_conn, monkeypatch):
     """The dashboard route must return the full DashboardSummary shape with
     every list field present and Pydantic-valid — no awaited-but-uninvoked
     coroutines slipping into the response."""
@@ -35,7 +35,7 @@ async def test_dashboard_aggregates_every_service(db_pool, monkeypatch):
     from app.auth import require_auth
     from app.main import create_app
 
-    monkeypatch.setattr(db_module, "_pool", db_pool)
+    monkeypatch.setattr(db_module, "_pool", db_conn)
     app = create_app()
     # Bypass the cookie-signed auth — Depends(require_auth) is short-circuited
     # to always return True for the duration of this test.
@@ -55,7 +55,7 @@ async def test_dashboard_aggregates_every_service(db_pool, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_login_flow_uses_async_db_paths(client, db_pool, monkeypatch):
+async def test_login_flow_uses_async_db_paths(client, db_conn, monkeypatch):
     """Drive /auth/login through the async ratelimit + auth.get_totp_state
     paths. Expects a 401 (no password configured, but the request must reach
     that error rather than 500-ing on a missed await)."""

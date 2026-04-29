@@ -24,15 +24,15 @@ def study_root(tmp_path, monkeypatch):
     return tmp_path
 
 
-async def _clear_file_index(db_pool) -> None:
+async def _clear_file_index(db_conn) -> None:
     """Wipe file_index between tests since each function-scoped pool reuses
     the session-scoped testcontainer."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute("DELETE FROM file_index")
 
 
-async def _count_rows(db_pool) -> int:
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+async def _count_rows(db_conn) -> int:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute("SELECT count(*) AS n FROM file_index")
         row = await cur.fetchone()
         return int(row["n"])
@@ -54,10 +54,10 @@ def _make_pdf(text: str = "Hello PDF") -> bytes:
 
 
 @pytest.mark.asyncio
-async def test_index_all_empty_root(client, db_pool, study_root):
+async def test_index_all_empty_root(client, db_conn, study_root):
     """An empty STUDY_ROOT indexes nothing and returns zero stats."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
 
     stats = await svc.index_all()
 
@@ -66,14 +66,14 @@ async def test_index_all_empty_root(client, db_pool, study_root):
     assert stats["failed"] == 0
     assert stats["pruned"] == 0
     assert stats["total_seen"] == 0
-    assert await _count_rows(db_pool) == 0
+    assert await _count_rows(db_conn) == 0
 
 
 @pytest.mark.asyncio
-async def test_index_all_indexes_one_pdf(client, db_pool, study_root):
+async def test_index_all_indexes_one_pdf(client, db_conn, study_root):
     """A single .pdf under a course folder gets indexed; row reflects content."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "ASB").mkdir()
     pdf_bytes = _make_pdf("Quantum mechanics overview")
     (study_root / "ASB" / "lecture1.pdf").write_bytes(pdf_bytes)
@@ -83,7 +83,7 @@ async def test_index_all_indexes_one_pdf(client, db_pool, study_root):
     assert stats["indexed"] == 1
     assert stats["failed"] == 0
     assert stats["total_seen"] == 1
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT path, course_code, size, sha256, text_content "
             "FROM file_index WHERE path = %s",
@@ -98,10 +98,10 @@ async def test_index_all_indexes_one_pdf(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_index_all_indexes_one_md(client, db_pool, study_root):
+async def test_index_all_indexes_one_md(client, db_conn, study_root):
     """A markdown file is indexed by raw decode."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "CS101").mkdir()
     md = "# Notes\nSome **markdown** content for tests."
     (study_root / "CS101" / "notes.md").write_text(md, encoding="utf-8")
@@ -109,7 +109,7 @@ async def test_index_all_indexes_one_md(client, db_pool, study_root):
     stats = await svc.index_all()
 
     assert stats["indexed"] == 1
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT text_content, course_code FROM file_index "
             "WHERE path = %s",
@@ -122,10 +122,10 @@ async def test_index_all_indexes_one_md(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_index_all_skips_unchanged_sha(client, db_pool, study_root):
+async def test_index_all_skips_unchanged_sha(client, db_conn, study_root):
     """Re-running with no file changes leaves all rows alone (skipped)."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "ASB").mkdir()
     (study_root / "ASB" / "a.md").write_text("hello", encoding="utf-8")
 
@@ -140,10 +140,10 @@ async def test_index_all_skips_unchanged_sha(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_index_all_prunes_removed_files(client, db_pool, study_root):
+async def test_index_all_prunes_removed_files(client, db_conn, study_root):
     """Files removed from disk are dropped from file_index on the next pass."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "ASB").mkdir()
     (study_root / "ASB" / "stays.md").write_text("kept", encoding="utf-8")
     (study_root / "ASB" / "goes.md").write_text("removed", encoding="utf-8")
@@ -156,7 +156,7 @@ async def test_index_all_prunes_removed_files(client, db_pool, study_root):
     second = await svc.index_all()
 
     assert second["pruned"] == 1
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT path FROM file_index ORDER BY path"
         )
@@ -166,10 +166,10 @@ async def test_index_all_prunes_removed_files(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_index_all_skips_non_indexable_extensions(client, db_pool, study_root):
+async def test_index_all_skips_non_indexable_extensions(client, db_conn, study_root):
     """Files with non-indexable suffixes are counted as `skipped`, not indexed."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "ASB").mkdir()
     (study_root / "ASB" / "image.jpg").write_bytes(b"\xff\xd8\xff")
     (study_root / "ASB" / "data.csv").write_text("a,b,c\n", encoding="utf-8")
@@ -180,16 +180,16 @@ async def test_index_all_skips_non_indexable_extensions(client, db_pool, study_r
     assert stats["indexed"] == 1  # only notes.md
     assert stats["skipped"] == 2  # jpg + csv
     assert stats["total_seen"] == 3
-    assert await _count_rows(db_pool) == 1
+    assert await _count_rows(db_conn) == 1
 
 
 @pytest.mark.asyncio
 async def test_index_all_failed_pdf_extract_does_not_crash(
-    client, db_pool, study_root
+    client, db_conn, study_root
 ):
     """A malformed .pdf bumps `failed` — the indexer doesn't abort the run."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "ASB").mkdir()
     # garbage bytes that aren't a real PDF
     (study_root / "ASB" / "broken.pdf").write_bytes(b"not actually a pdf")
@@ -201,7 +201,7 @@ async def test_index_all_failed_pdf_extract_does_not_crash(
     assert stats["indexed"] == 1
     assert stats["failed"] == 1
     assert stats["total_seen"] == 2
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute("SELECT path FROM file_index")
         rows = await cur.fetchall()
     paths = {r["path"] for r in rows}
@@ -209,10 +209,10 @@ async def test_index_all_failed_pdf_extract_does_not_crash(
 
 
 @pytest.mark.asyncio
-async def test_index_all_indexes_ipynb(client, db_pool, study_root):
+async def test_index_all_indexes_ipynb(client, db_conn, study_root):
     """`.ipynb` notebooks: cell sources are concatenated into text_content."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     (study_root / "CS101").mkdir()
     nb = {
         "cells": [
@@ -230,7 +230,7 @@ async def test_index_all_indexes_ipynb(client, db_pool, study_root):
     stats = await svc.index_all()
 
     assert stats["indexed"] == 1
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT text_content FROM file_index WHERE path = %s",
             ("CS101/lab.ipynb",),
@@ -245,7 +245,7 @@ async def test_index_all_indexes_ipynb(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_search_short_query_returns_empty(client, db_pool):
+async def test_search_short_query_returns_empty(client, db_conn):
     """Queries shorter than 2 chars short-circuit without hitting the DB."""
     from app.services import file_index as svc
     assert await svc.search("") == []
@@ -254,12 +254,12 @@ async def test_search_short_query_returns_empty(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_search_returns_matching_rows(client, db_pool):
+async def test_search_returns_matching_rows(client, db_conn):
     """A row whose text_content matches the query comes back via the RPC."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
+    await _clear_file_index(db_conn)
     # Seed file_index directly — search() doesn't need actual files on disk.
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO file_index (path, course_code, size, sha256, "
             "text_content) VALUES (%s, %s, %s, %s, %s)",
@@ -284,11 +284,11 @@ async def test_search_returns_matching_rows(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_search_no_matches_returns_empty(client, db_pool):
+async def test_search_no_matches_returns_empty(client, db_conn):
     """A non-matching query returns []."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    await _clear_file_index(db_conn)
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO file_index (path, course_code, size, sha256, "
             "text_content) VALUES (%s, %s, %s, %s, %s)",
@@ -301,11 +301,11 @@ async def test_search_no_matches_returns_empty(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_search_respects_limit(client, db_pool):
+async def test_search_respects_limit(client, db_conn):
     """`limit` caps the number of results from the RPC."""
     from app.services import file_index as svc
-    await _clear_file_index(db_pool)
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    await _clear_file_index(db_conn)
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         for i in range(5):
             await cur.execute(
                 "INSERT INTO file_index (path, course_code, size, sha256, "

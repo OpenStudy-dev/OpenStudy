@@ -12,9 +12,9 @@ from datetime import datetime, timezone
 import pytest
 
 
-async def _seed_course(db_pool, code: str) -> None:
+async def _seed_course(db_conn, code: str) -> None:
     """Insert a courses row so the exam FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -23,24 +23,24 @@ async def _seed_course(db_pool, code: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_exams_empty(client, db_pool):
+async def test_list_exams_empty(client, db_conn):
     from app.services import exams as svc
     result = await svc.list_exams()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_get_exam_missing_returns_none(client, db_pool):
+async def test_get_exam_missing_returns_none(client, db_conn):
     from app.services import exams as svc
     result = await svc.get_exam("EXAMT0")
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_update_exam_inserts_when_missing(client, db_pool):
+async def test_update_exam_inserts_when_missing(client, db_conn):
     from app.schemas import ExamPatch
     from app.services import exams as svc
-    await _seed_course(db_pool, "EXAMT1")
+    await _seed_course(db_conn, "EXAMT1")
 
     scheduled = datetime(2026, 7, 20, 9, 0, tzinfo=timezone.utc)
     created = await svc.update_exam(
@@ -74,10 +74,10 @@ async def test_update_exam_inserts_when_missing(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_exam_updates_when_present(client, db_pool):
+async def test_update_exam_updates_when_present(client, db_conn):
     from app.schemas import ExamPatch
     from app.services import exams as svc
-    await _seed_course(db_pool, "EXAMT2")
+    await _seed_course(db_conn, "EXAMT2")
 
     # First call: insert
     await svc.update_exam(
@@ -104,10 +104,10 @@ async def test_update_exam_updates_when_present(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_exam_empty_patch_when_present_is_noop(client, db_pool):
+async def test_update_exam_empty_patch_when_present_is_noop(client, db_conn):
     from app.schemas import ExamPatch
     from app.services import exams as svc
-    await _seed_course(db_pool, "EXAMT3")
+    await _seed_course(db_conn, "EXAMT3")
     seeded = await svc.update_exam(
         "EXAMT3",
         ExamPatch(location="Original", duration_min=45),
@@ -120,12 +120,12 @@ async def test_update_exam_empty_patch_when_present_is_noop(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_exam_empty_patch_when_missing_creates_default(client, db_pool):
+async def test_update_exam_empty_patch_when_missing_creates_default(client, db_conn):
     """Empty patch on a missing course should still insert a default row
     (course_code only). This matches the legacy upsert behavior."""
     from app.schemas import ExamPatch
     from app.services import exams as svc
-    await _seed_course(db_pool, "EXAMT4")
+    await _seed_course(db_conn, "EXAMT4")
     result = await svc.update_exam("EXAMT4", ExamPatch())
     assert result.course_code == "EXAMT4"
     # Defaults from schema
@@ -138,10 +138,10 @@ async def test_update_exam_empty_patch_when_missing_creates_default(client, db_p
 
 
 @pytest.mark.asyncio
-async def test_list_exams_returns_inserted(client, db_pool):
+async def test_list_exams_returns_inserted(client, db_conn):
     from app.schemas import ExamPatch
     from app.services import exams as svc
-    await _seed_course(db_pool, "EXAMT5")
+    await _seed_course(db_conn, "EXAMT5")
     await svc.update_exam(
         "EXAMT5",
         ExamPatch(
@@ -155,7 +155,7 @@ async def test_list_exams_returns_inserted(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_exam_missing_course_raises(client, db_pool):
+async def test_update_exam_missing_course_raises(client, db_conn):
     """No matching course row → FK violation on insert."""
     from app.schemas import ExamPatch
     from app.services import exams as svc

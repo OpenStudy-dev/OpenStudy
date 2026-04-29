@@ -26,7 +26,10 @@ async def list_events(
     sql = "SELECT * FROM events"
     if where:
         sql += " WHERE " + " AND ".join(where)
-    sql += " ORDER BY created_at DESC LIMIT %s"
+    # Tie-break by `id` so events recorded inside the same transaction
+    # (which share an identical `created_at = now()`) still get a stable
+    # ordering — essential for batched activity-log displays.
+    sql += " ORDER BY created_at DESC, id DESC LIMIT %s"
     args.append(limit)
     rows = await db.fetch(sql, *args)
     return [Event.model_validate(r) for r in rows]
@@ -34,13 +37,19 @@ async def list_events(
 
 async def record_event(payload: EventCreate) -> Event:
     """Insert a row into `events`. JSONB payload is serialised via json.dumps
-    + an explicit `::jsonb` cast so psycopg sends it as a single text param."""
-    # `payload` here is the Pydantic model; its `.payload` attribute is the
-    # event body dict (or None). Don't confuse with the variable name.
+    + an explicit `::jsonb` cast so psycopg sends it as a single text param.
+
+    `created_at` is set to `clock_timestamp()` (microsecond-precision wall
+    time) rather than the table-default `now()` (which is fixed for the
+    entire transaction). Multiple events recorded inside one transaction
+    therefore get distinct timestamps — important for activity-log
+    ordering when batching, and required for correctness under per-test
+    transaction-isolated test fixtures.
+    """
     payload_json = json.dumps(payload.payload) if payload.payload is not None else None
     row = await db.fetchrow(
-        "INSERT INTO events (kind, course_code, payload) "
-        "VALUES (%s, %s, %s::jsonb) RETURNING *",
+        "INSERT INTO events (kind, course_code, payload, created_at) "
+        "VALUES (%s, %s, %s::jsonb, clock_timestamp()) RETURNING *",
         payload.kind, payload.course_code, payload_json,
     )
     if row is None:

@@ -4,9 +4,9 @@ from datetime import date
 import pytest
 
 
-async def _seed_course(db_pool, code: str = "TEST") -> None:
+async def _seed_course(db_conn, code: str = "TEST") -> None:
     """Insert a courses row so lecture FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -15,17 +15,17 @@ async def _seed_course(db_pool, code: str = "TEST") -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_lectures_empty(client, db_pool):
+async def test_list_lectures_empty(client, db_conn):
     from app.services import lectures as svc
     result = await svc.list_lectures()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_create_then_list(client, db_pool):
+async def test_create_then_list(client, db_conn):
     from app.schemas import LectureCreate
     from app.services import lectures as svc
-    await _seed_course(db_pool, "LEC1")
+    await _seed_course(db_conn, "LEC1")
     created = await svc.create_lecture(LectureCreate(
         course_code="LEC1",
         number=1,
@@ -49,11 +49,11 @@ async def test_create_then_list(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_lectures_filtered_by_course(client, db_pool):
+async def test_list_lectures_filtered_by_course(client, db_conn):
     from app.schemas import LectureCreate
     from app.services import lectures as svc
-    await _seed_course(db_pool, "AAA")
-    await _seed_course(db_pool, "BBB")
+    await _seed_course(db_conn, "AAA")
+    await _seed_course(db_conn, "BBB")
     await svc.create_lecture(LectureCreate(
         course_code="AAA", number=1, held_on=date(2026, 4, 1), kind="lecture",
     ))
@@ -69,17 +69,17 @@ async def test_list_lectures_filtered_by_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_get_lecture_missing(client, db_pool):
+async def test_get_lecture_missing(client, db_conn):
     from app.services import lectures as svc
     result = await svc.get_lecture("00000000-0000-0000-0000-000000000000")
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_get_lecture_returns_existing(client, db_pool):
+async def test_get_lecture_returns_existing(client, db_conn):
     from app.schemas import LectureCreate
     from app.services import lectures as svc
-    await _seed_course(db_pool, "GET")
+    await _seed_course(db_conn, "GET")
     created = await svc.create_lecture(LectureCreate(
         course_code="GET", number=2, held_on=date(2026, 4, 10), kind="lecture",
         title="Lookup",
@@ -91,10 +91,10 @@ async def test_get_lecture_returns_existing(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_lecture(client, db_pool):
+async def test_update_lecture(client, db_conn):
     from app.schemas import LectureCreate, LecturePatch
     from app.services import lectures as svc
-    await _seed_course(db_pool, "UPD")
+    await _seed_course(db_conn, "UPD")
     created = await svc.create_lecture(LectureCreate(
         course_code="UPD", number=3, held_on=date(2026, 4, 5), kind="lecture",
         title="Original", attended=False,
@@ -109,7 +109,7 @@ async def test_update_lecture(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_lecture_empty_patch_raises(client, db_pool):
+async def test_update_lecture_empty_patch_raises(client, db_conn):
     from app.schemas import LecturePatch
     from app.services import lectures as svc
     with pytest.raises(ValueError):
@@ -120,7 +120,7 @@ async def test_update_lecture_empty_patch_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_lecture_missing_id_raises(client, db_pool):
+async def test_update_lecture_missing_id_raises(client, db_conn):
     from app.schemas import LecturePatch
     from app.services import lectures as svc
     with pytest.raises(ValueError):
@@ -131,10 +131,10 @@ async def test_update_lecture_missing_id_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_mark_attended(client, db_pool):
+async def test_mark_attended(client, db_conn):
     from app.schemas import LectureCreate
     from app.services import lectures as svc
-    await _seed_course(db_pool, "ATT")
+    await _seed_course(db_conn, "ATT")
     created = await svc.create_lecture(LectureCreate(
         course_code="ATT", number=1, held_on=date(2026, 4, 20), kind="lecture",
         attended=False,
@@ -148,10 +148,10 @@ async def test_mark_attended(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_delete_lecture(client, db_pool):
+async def test_delete_lecture(client, db_conn):
     from app.schemas import LectureCreate
     from app.services import lectures as svc
-    await _seed_course(db_pool, "DEL")
+    await _seed_course(db_conn, "DEL")
     created = await svc.create_lecture(LectureCreate(
         course_code="DEL", number=1, held_on=date(2026, 4, 1), kind="lecture",
     ))

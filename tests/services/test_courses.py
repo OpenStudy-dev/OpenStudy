@@ -3,14 +3,14 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_list_courses_empty(client, db_pool):
+async def test_list_courses_empty(client, db_conn):
     from app.services import courses as svc
     result = await svc.list_courses()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_create_then_list(client, db_pool):
+async def test_create_then_list(client, db_conn):
     from app.services import courses as svc
     from app.schemas import CourseCreate
     created = await svc.create_course(CourseCreate(
@@ -26,14 +26,14 @@ async def test_create_then_list(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_get_course_missing(client, db_pool):
+async def test_get_course_missing(client, db_conn):
     from app.services import courses as svc
     result = await svc.get_course("DOES_NOT_EXIST")
     assert result is None
 
 
 @pytest.mark.asyncio
-async def test_update_course(client, db_pool):
+async def test_update_course(client, db_conn):
     from app.services import courses as svc
     from app.schemas import CourseCreate, CoursePatch
     await svc.create_course(CourseCreate(code="UPD", full_name="Original", ects=3))
@@ -43,7 +43,7 @@ async def test_update_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_delete_course(client, db_pool):
+async def test_delete_course(client, db_conn):
     from app.services import courses as svc
     from app.schemas import CourseCreate
     await svc.create_course(CourseCreate(code="DEL", full_name="Doomed", ects=1))

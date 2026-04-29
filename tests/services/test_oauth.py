@@ -41,7 +41,7 @@ async def _register_client(name: str = "Test Client") -> dict:
 # ── Client registration ──────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_create_client_round_trip(client, db_pool):
+async def test_create_client_round_trip(client, db_conn):
     """create_client → get_client retrieves the same row."""
     from app.services import oauth as svc
     created = await svc.create_client(
@@ -67,7 +67,7 @@ async def test_create_client_round_trip(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_create_confidential_client_has_secret(client, db_pool):
+async def test_create_confidential_client_has_secret(client, db_conn):
     """Non-public clients get a client_secret."""
     from app.services import oauth as svc
     created = await svc.create_client(
@@ -81,7 +81,7 @@ async def test_create_confidential_client_has_secret(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_get_client_unknown_returns_none(client, db_pool):
+async def test_get_client_unknown_returns_none(client, db_conn):
     from app.services import oauth as svc
     assert await svc.get_client("not-a-real-client") is None
 
@@ -89,7 +89,7 @@ async def test_get_client_unknown_returns_none(client, db_pool):
 # ── Auth codes ───────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_unknown_returns_none(client, db_pool):
+async def test_consume_auth_code_unknown_returns_none(client, db_conn):
     """Unknown auth code → None (not raises)."""
     from app.services import oauth as svc
     verifier, _ = _pkce_pair()
@@ -102,7 +102,7 @@ async def test_consume_auth_code_unknown_returns_none(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_happy_path(client, db_pool):
+async def test_consume_auth_code_happy_path(client, db_conn):
     """Valid code with correct PKCE verifier returns the row."""
     from app.services import oauth as svc
     cli = await _register_client("Happy Path")
@@ -127,7 +127,7 @@ async def test_consume_auth_code_happy_path(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_single_use(client, db_pool):
+async def test_consume_auth_code_single_use(client, db_conn):
     """Used auth code → second consume returns None (replay protection)."""
     from app.services import oauth as svc
     cli = await _register_client("Single-Use")
@@ -150,7 +150,7 @@ async def test_consume_auth_code_single_use(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_expired_returns_none(client, db_pool):
+async def test_consume_auth_code_expired_returns_none(client, db_conn):
     """Expired auth code → None. Backdates expires_at to simulate."""
     from app.services import oauth as svc
     cli = await _register_client("Expired Code")
@@ -163,7 +163,7 @@ async def test_consume_auth_code_expired_returns_none(client, db_pool):
         scope=None,
     )
     # Backdate expiry directly via the pool — service has no expiry-mutator.
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "UPDATE oauth_auth_codes SET expires_at = %s WHERE code = %s",
             (datetime.now(timezone.utc) - timedelta(seconds=60), code),
@@ -175,7 +175,7 @@ async def test_consume_auth_code_expired_returns_none(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_wrong_client_returns_none(client, db_pool):
+async def test_consume_auth_code_wrong_client_returns_none(client, db_conn):
     """client_id mismatch → None."""
     from app.services import oauth as svc
     cli = await _register_client("Wrong Client")
@@ -194,7 +194,7 @@ async def test_consume_auth_code_wrong_client_returns_none(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_wrong_redirect_returns_none(client, db_pool):
+async def test_consume_auth_code_wrong_redirect_returns_none(client, db_conn):
     """redirect_uri mismatch → None."""
     from app.services import oauth as svc
     cli = await _register_client("Wrong Redirect")
@@ -213,7 +213,7 @@ async def test_consume_auth_code_wrong_redirect_returns_none(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_bad_verifier_returns_none(client, db_pool):
+async def test_consume_auth_code_bad_verifier_returns_none(client, db_conn):
     """PKCE verifier doesn't match challenge → None."""
     from app.services import oauth as svc
     cli = await _register_client("Bad Verifier")
@@ -235,7 +235,7 @@ async def test_consume_auth_code_bad_verifier_returns_none(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_consume_auth_code_plain_method(client, db_pool):
+async def test_consume_auth_code_plain_method(client, db_conn):
     """`plain` PKCE method: verifier == challenge."""
     from app.services import oauth as svc
     cli = await _register_client("Plain PKCE")
@@ -263,7 +263,7 @@ async def test_consume_auth_code_plain_method(client, db_pool):
 # ── Access tokens ────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_create_and_verify_access_token(client, db_pool):
+async def test_create_and_verify_access_token(client, db_conn):
     """Issued token validates and carries the client_id + scope."""
     from app.services import oauth as svc
     cli = await _register_client("Token Issue")
@@ -279,13 +279,13 @@ async def test_create_and_verify_access_token(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_verify_unknown_token_returns_none(client, db_pool):
+async def test_verify_unknown_token_returns_none(client, db_conn):
     from app.services import oauth as svc
     assert await svc.verify_access_token("not-a-real-token") is None
 
 
 @pytest.mark.asyncio
-async def test_token_revocation_invalidates_bearer(client, db_pool):
+async def test_token_revocation_invalidates_bearer(client, db_conn):
     """Revoking a token → verify_access_token returns None afterwards."""
     from app.services import oauth as svc
     cli = await _register_client("Revoke")
@@ -301,13 +301,13 @@ async def test_token_revocation_invalidates_bearer(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_verify_expired_token_returns_none(client, db_pool):
+async def test_verify_expired_token_returns_none(client, db_conn):
     """Token past expires_at no longer validates."""
     from app.services import oauth as svc
     cli = await _register_client("Expire Token")
     token, _ = await svc.create_access_token(cli["client_id"], "mcp")
     # Backdate expiry.
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "UPDATE oauth_tokens SET expires_at = %s WHERE token = %s",
             (datetime.now(timezone.utc) - timedelta(seconds=60), token),

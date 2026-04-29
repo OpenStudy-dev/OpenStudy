@@ -4,9 +4,9 @@ from datetime import time
 import pytest
 
 
-async def _seed_course(db_pool, code: str = "TEST") -> None:
+async def _seed_course(db_conn, code: str = "TEST") -> None:
     """Insert a courses row so slot FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -15,17 +15,17 @@ async def _seed_course(db_pool, code: str = "TEST") -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_slots_empty(client, db_pool):
+async def test_list_slots_empty(client, db_conn):
     from app.services import slots as svc
     result = await svc.list_slots()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_create_then_list(client, db_pool):
+async def test_create_then_list(client, db_conn):
     from app.schemas import SlotCreate
     from app.services import slots as svc
-    await _seed_course(db_pool, "TEST")
+    await _seed_course(db_conn, "TEST")
     created = await svc.create_slot(SlotCreate(
         course_code="TEST",
         kind="lecture",
@@ -47,11 +47,11 @@ async def test_create_then_list(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_slots_filtered_by_course(client, db_pool):
+async def test_list_slots_filtered_by_course(client, db_conn):
     from app.schemas import SlotCreate
     from app.services import slots as svc
-    await _seed_course(db_pool, "AAA")
-    await _seed_course(db_pool, "BBB")
+    await _seed_course(db_conn, "AAA")
+    await _seed_course(db_conn, "BBB")
     await svc.create_slot(SlotCreate(
         course_code="AAA", kind="lecture", weekday=1,
         start_time=time(8, 0), end_time=time(10, 0),
@@ -69,7 +69,7 @@ async def test_list_slots_filtered_by_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_create_slot_missing_course_raises(client, db_pool):
+async def test_create_slot_missing_course_raises(client, db_conn):
     from app.schemas import SlotCreate
     from app.services import slots as svc
     # No course seeded — FK violation expected.
@@ -81,10 +81,10 @@ async def test_create_slot_missing_course_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_slot(client, db_pool):
+async def test_update_slot(client, db_conn):
     from app.schemas import SlotCreate, SlotPatch
     from app.services import slots as svc
-    await _seed_course(db_pool, "UPD")
+    await _seed_course(db_conn, "UPD")
     created = await svc.create_slot(SlotCreate(
         course_code="UPD", kind="lecture", weekday=1,
         start_time=time(9, 0), end_time=time(11, 0), room="A1",
@@ -97,7 +97,7 @@ async def test_update_slot(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_slot_missing_id_raises(client, db_pool):
+async def test_update_slot_missing_id_raises(client, db_conn):
     from app.schemas import SlotPatch
     from app.services import slots as svc
     with pytest.raises(ValueError):
@@ -108,10 +108,10 @@ async def test_update_slot_missing_id_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_delete_slot(client, db_pool):
+async def test_delete_slot(client, db_conn):
     from app.schemas import SlotCreate
     from app.services import slots as svc
-    await _seed_course(db_pool, "DEL")
+    await _seed_course(db_conn, "DEL")
     created = await svc.create_slot(SlotCreate(
         course_code="DEL", kind="lecture", weekday=1,
         start_time=time(10, 0), end_time=time(12, 0),

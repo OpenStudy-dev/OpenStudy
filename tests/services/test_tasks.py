@@ -13,9 +13,9 @@ from datetime import datetime, timezone
 import pytest
 
 
-async def _seed_course(db_pool, code: str) -> None:
+async def _seed_course(db_conn, code: str) -> None:
     """Insert a courses row so the task FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -24,14 +24,14 @@ async def _seed_course(db_pool, code: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_empty(client, db_pool):
+async def test_list_tasks_empty(client, db_conn):
     from app.services import tasks as svc
     result = await svc.list_tasks()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_create_task_without_course(client, db_pool):
+async def test_create_task_without_course(client, db_conn):
     """course_code is nullable on tasks — a personal todo has no course."""
     from app.schemas import TaskCreate
     from app.services import tasks as svc
@@ -47,10 +47,10 @@ async def test_create_task_without_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_create_task_with_course(client, db_pool):
+async def test_create_task_with_course(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKA")
+    await _seed_course(db_conn, "TASKA")
     created = await svc.create_task(TaskCreate(
         course_code="TASKA",
         title="Read chapter 1",
@@ -69,7 +69,7 @@ async def test_create_task_with_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_create_task_missing_course_raises(client, db_pool):
+async def test_create_task_missing_course_raises(client, db_conn):
     """If a course_code is given but no such course exists, FK fails."""
     from app.schemas import TaskCreate
     from app.services import tasks as svc
@@ -81,11 +81,11 @@ async def test_create_task_missing_course_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_filtered_by_course(client, db_pool):
+async def test_list_tasks_filtered_by_course(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKB")
-    await _seed_course(db_pool, "TASKC")
+    await _seed_course(db_conn, "TASKB")
+    await _seed_course(db_conn, "TASKC")
     await svc.create_task(TaskCreate(course_code="TASKB", title="b1"))
     await svc.create_task(TaskCreate(course_code="TASKC", title="c1"))
     only_b = await svc.list_tasks(course_code="TASKB")
@@ -97,10 +97,10 @@ async def test_list_tasks_filtered_by_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_filtered_by_status(client, db_pool):
+async def test_list_tasks_filtered_by_status(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKD")
+    await _seed_course(db_conn, "TASKD")
     await svc.create_task(TaskCreate(
         course_code="TASKD", title="open-one", status="open",
     ))
@@ -114,10 +114,10 @@ async def test_list_tasks_filtered_by_status(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_filtered_by_priority(client, db_pool):
+async def test_list_tasks_filtered_by_priority(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKE")
+    await _seed_course(db_conn, "TASKE")
     await svc.create_task(TaskCreate(
         course_code="TASKE", title="low-one", priority="low",
     ))
@@ -131,10 +131,10 @@ async def test_list_tasks_filtered_by_priority(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_filtered_by_due_before(client, db_pool):
+async def test_list_tasks_filtered_by_due_before(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKF")
+    await _seed_course(db_conn, "TASKF")
     await svc.create_task(TaskCreate(
         course_code="TASKF", title="early",
         due_at=datetime(2026, 4, 15, tzinfo=timezone.utc),
@@ -150,11 +150,11 @@ async def test_list_tasks_filtered_by_due_before(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_tasks_filtered_by_tag(client, db_pool):
+async def test_list_tasks_filtered_by_tag(client, db_conn):
     """Tag filtering is post-fetch (Python-side), not SQL."""
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKG")
+    await _seed_course(db_conn, "TASKG")
     await svc.create_task(TaskCreate(
         course_code="TASKG", title="tagged", tags=["reading", "math"],
     ))
@@ -170,10 +170,10 @@ async def test_list_tasks_filtered_by_tag(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_task_changes_fields(client, db_pool):
+async def test_update_task_changes_fields(client, db_conn):
     from app.schemas import TaskCreate, TaskPatch
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKH")
+    await _seed_course(db_conn, "TASKH")
     created = await svc.create_task(TaskCreate(
         course_code="TASKH", title="Original", priority="low",
     ))
@@ -189,7 +189,7 @@ async def test_update_task_changes_fields(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_task_empty_patch_raises(client, db_pool):
+async def test_update_task_empty_patch_raises(client, db_conn):
     from app.schemas import TaskPatch
     from app.services import tasks as svc
     with pytest.raises(ValueError):
@@ -199,7 +199,7 @@ async def test_update_task_empty_patch_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_task_missing_id_raises(client, db_pool):
+async def test_update_task_missing_id_raises(client, db_conn):
     from app.schemas import TaskPatch
     from app.services import tasks as svc
     with pytest.raises(ValueError):
@@ -210,10 +210,10 @@ async def test_update_task_missing_id_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_complete_task_sets_status_and_completed_at(client, db_pool):
+async def test_complete_task_sets_status_and_completed_at(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKI")
+    await _seed_course(db_conn, "TASKI")
     created = await svc.create_task(TaskCreate(
         course_code="TASKI", title="To complete",
     ))
@@ -226,11 +226,11 @@ async def test_complete_task_sets_status_and_completed_at(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_reopen_task_clears_completed_at(client, db_pool):
+async def test_reopen_task_clears_completed_at(client, db_conn):
     """Moving a task out of `done` clears completed_at."""
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKJ")
+    await _seed_course(db_conn, "TASKJ")
     created = await svc.create_task(TaskCreate(
         course_code="TASKJ", title="To reopen",
     ))
@@ -243,11 +243,11 @@ async def test_reopen_task_clears_completed_at(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_task_to_in_progress_clears_completed_at(client, db_pool):
+async def test_update_task_to_in_progress_clears_completed_at(client, db_conn):
     """Any non-done status mutation clears completed_at."""
     from app.schemas import TaskCreate, TaskPatch
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKK")
+    await _seed_course(db_conn, "TASKK")
     created = await svc.create_task(TaskCreate(
         course_code="TASKK", title="Flip-flop",
     ))
@@ -258,10 +258,10 @@ async def test_update_task_to_in_progress_clears_completed_at(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_delete_task(client, db_pool):
+async def test_delete_task(client, db_conn):
     from app.schemas import TaskCreate
     from app.services import tasks as svc
-    await _seed_course(db_pool, "TASKL")
+    await _seed_course(db_conn, "TASKL")
     created = await svc.create_task(TaskCreate(
         course_code="TASKL", title="Doomed",
     ))

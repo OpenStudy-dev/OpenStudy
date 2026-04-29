@@ -30,14 +30,14 @@ def study_root(tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_list_files_empty_root_returns_empty(client, db_pool, study_root):
+async def test_list_files_empty_root_returns_empty(client, db_conn, study_root):
     from app.services import storage as svc
     result = await svc.list_files("")
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_list_files_returns_files_and_folders(client, db_pool, study_root):
+async def test_list_files_returns_files_and_folders(client, db_conn, study_root):
     """Folder entries get id=None; file entries get id + size + mimetype."""
     from app.services import storage as svc
     (study_root / "folder").mkdir()
@@ -59,7 +59,7 @@ async def test_list_files_returns_files_and_folders(client, db_pool, study_root)
 
 
 @pytest.mark.asyncio
-async def test_list_files_filters_dotfiles(client, db_pool, study_root):
+async def test_list_files_filters_dotfiles(client, db_conn, study_root):
     """Anything starting with `.` is hidden from listings."""
     from app.services import storage as svc
     (study_root / "visible.txt").write_text("v", encoding="utf-8")
@@ -74,7 +74,7 @@ async def test_list_files_filters_dotfiles(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_list_files_at_subprefix(client, db_pool, study_root):
+async def test_list_files_at_subprefix(client, db_conn, study_root):
     """Listing a subfolder returns only its direct children."""
     from app.services import storage as svc
     (study_root / "ASB").mkdir()
@@ -89,7 +89,7 @@ async def test_list_files_at_subprefix(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_list_files_invalid_prefix_returns_empty(client, db_pool, study_root):
+async def test_list_files_invalid_prefix_returns_empty(client, db_conn, study_root):
     """`..` traversal attempts return [] rather than raising."""
     from app.services import storage as svc
     result = await svc.list_files("../etc")
@@ -100,7 +100,7 @@ async def test_list_files_invalid_prefix_returns_empty(client, db_pool, study_ro
 
 
 @pytest.mark.asyncio
-async def test_list_recursive_descends_subfolders(client, db_pool, study_root):
+async def test_list_recursive_descends_subfolders(client, db_conn, study_root):
     """Walks every level under prefix, returns relative paths with `/` separators."""
     from app.services import storage as svc
     (study_root / "ASB").mkdir()
@@ -114,7 +114,7 @@ async def test_list_recursive_descends_subfolders(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_list_recursive_skips_dotfiles(client, db_pool, study_root):
+async def test_list_recursive_skips_dotfiles(client, db_conn, study_root):
     """Dot-prefixed files anywhere in the tree are excluded."""
     from app.services import storage as svc
     (study_root / "ASB").mkdir()
@@ -129,7 +129,7 @@ async def test_list_recursive_skips_dotfiles(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_list_recursive_invalid_prefix_returns_empty(client, db_pool, study_root):
+async def test_list_recursive_invalid_prefix_returns_empty(client, db_conn, study_root):
     from app.services import storage as svc
     result = await svc.list_recursive("../escape")
     assert result == []
@@ -139,7 +139,7 @@ async def test_list_recursive_invalid_prefix_returns_empty(client, db_pool, stud
 
 
 @pytest.mark.asyncio
-async def test_download_returns_bytes(client, db_pool, study_root):
+async def test_download_returns_bytes(client, db_conn, study_root):
     from app.services import storage as svc
     (study_root / "a.txt").write_bytes(b"hello world")
     data = await svc.download("a.txt")
@@ -147,14 +147,14 @@ async def test_download_returns_bytes(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_download_missing_raises(client, db_pool, study_root):
+async def test_download_missing_raises(client, db_conn, study_root):
     from app.services import storage as svc
     with pytest.raises(FileNotFoundError):
         await svc.download("does_not_exist.txt")
 
 
 @pytest.mark.asyncio
-async def test_download_path_escape_raises(client, db_pool, study_root):
+async def test_download_path_escape_raises(client, db_conn, study_root):
     """`..` traversal must not let us read outside STUDY_ROOT."""
     from app.services import storage as svc
     with pytest.raises(ValueError):
@@ -162,26 +162,26 @@ async def test_download_path_escape_raises(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_exists_true_for_file(client, db_pool, study_root):
+async def test_exists_true_for_file(client, db_conn, study_root):
     from app.services import storage as svc
     (study_root / "x.txt").write_bytes(b"x")
     assert await svc.exists("x.txt") is True
 
 
 @pytest.mark.asyncio
-async def test_exists_false_for_missing(client, db_pool, study_root):
+async def test_exists_false_for_missing(client, db_conn, study_root):
     from app.services import storage as svc
     assert await svc.exists("nope.txt") is False
 
 
 @pytest.mark.asyncio
-async def test_exists_false_for_traversal(client, db_pool, study_root):
+async def test_exists_false_for_traversal(client, db_conn, study_root):
     from app.services import storage as svc
     assert await svc.exists("../../etc/passwd") is False
 
 
 @pytest.mark.asyncio
-async def test_stat_returns_metadata(client, db_pool, study_root):
+async def test_stat_returns_metadata(client, db_conn, study_root):
     from app.services import storage as svc
     (study_root / "a.pdf").write_bytes(b"%PDF-1.4 stub")
     meta = await svc.stat("a.pdf")
@@ -193,7 +193,7 @@ async def test_stat_returns_metadata(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_stat_missing_returns_none(client, db_pool, study_root):
+async def test_stat_missing_returns_none(client, db_conn, study_root):
     from app.services import storage as svc
     assert await svc.stat("nope.txt") is None
 
@@ -202,7 +202,7 @@ async def test_stat_missing_returns_none(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_upload_round_trip(client, db_pool, study_root):
+async def test_upload_round_trip(client, db_conn, study_root):
     """upload → download returns identical bytes; size matches."""
     from app.services import storage as svc
     payload = b"binary data \x00 \xff\xfe round trip"
@@ -219,7 +219,7 @@ async def test_upload_round_trip(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_upload_creates_parent_dirs(client, db_pool, study_root):
+async def test_upload_creates_parent_dirs(client, db_conn, study_root):
     """Nested paths auto-create parent folders."""
     from app.services import storage as svc
     await svc.upload("a/b/c/file.txt", b"x")
@@ -227,7 +227,7 @@ async def test_upload_creates_parent_dirs(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_upload_overwrites_existing(client, db_pool, study_root):
+async def test_upload_overwrites_existing(client, db_conn, study_root):
     """Re-uploading the same path replaces the old contents atomically."""
     from app.services import storage as svc
     await svc.upload("a.txt", b"first")
@@ -236,7 +236,7 @@ async def test_upload_overwrites_existing(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_delete_removes_file(client, db_pool, study_root):
+async def test_delete_removes_file(client, db_conn, study_root):
     from app.services import storage as svc
     (study_root / "a.txt").write_bytes(b"x")
     result = await svc.delete(["a.txt"])
@@ -245,7 +245,7 @@ async def test_delete_removes_file(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_delete_missing_is_idempotent(client, db_pool, study_root):
+async def test_delete_missing_is_idempotent(client, db_conn, study_root):
     """Missing paths silently skip — no exception, no count."""
     from app.services import storage as svc
     result = await svc.delete(["never_existed.txt"])
@@ -253,7 +253,7 @@ async def test_delete_missing_is_idempotent(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_delete_skips_traversal(client, db_pool, study_root):
+async def test_delete_skips_traversal(client, db_conn, study_root):
     """Paths that escape STUDY_ROOT are silently skipped, not deleted."""
     from app.services import storage as svc
     (study_root / "real.txt").write_bytes(b"x")
@@ -262,7 +262,7 @@ async def test_delete_skips_traversal(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_move_renames_file(client, db_pool, study_root):
+async def test_move_renames_file(client, db_conn, study_root):
     from app.services import storage as svc
     (study_root / "a.txt").write_bytes(b"hello")
     result = await svc.move("a.txt", "b.txt")
@@ -272,7 +272,7 @@ async def test_move_renames_file(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_move_across_directories(client, db_pool, study_root):
+async def test_move_across_directories(client, db_conn, study_root):
     """Cross-folder moves auto-create the destination directory."""
     from app.services import storage as svc
     (study_root / "src").mkdir()
@@ -282,7 +282,7 @@ async def test_move_across_directories(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_move_missing_source_raises(client, db_pool, study_root):
+async def test_move_missing_source_raises(client, db_conn, study_root):
     from app.services import storage as svc
     with pytest.raises(FileNotFoundError):
         await svc.move("nope.txt", "anywhere.txt")
@@ -292,7 +292,7 @@ async def test_move_missing_source_raises(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_signed_url_for_existing_file(client, db_pool, study_root):
+async def test_signed_url_for_existing_file(client, db_conn, study_root):
     from app.services import storage as svc
     (study_root / "doc.pdf").write_bytes(b"%PDF-1.4")
     url = await svc.signed_url("doc.pdf")
@@ -302,14 +302,14 @@ async def test_signed_url_for_existing_file(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_signed_url_missing_raises(client, db_pool, study_root):
+async def test_signed_url_missing_raises(client, db_conn, study_root):
     from app.services import storage as svc
     with pytest.raises(FileNotFoundError):
         await svc.signed_url("nope.pdf")
 
 
 @pytest.mark.asyncio
-async def test_signed_upload_url_returns_target(client, db_pool, study_root):
+async def test_signed_upload_url_returns_target(client, db_conn, study_root):
     from app.services import storage as svc
     result = await svc.signed_upload_url("ASB/upload.pdf")
     assert result["path"] == "ASB/upload.pdf"
@@ -320,9 +320,9 @@ async def test_signed_upload_url_returns_target(client, db_pool, study_root):
 # ── _log course-code extraction (Batch A behaviour preserved) ────────────────
 
 
-async def _seed_course(db_pool, code: str) -> None:
+async def _seed_course(db_conn, code: str) -> None:
     """Insert a courses row so the events FK is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -331,13 +331,13 @@ async def _seed_course(db_pool, code: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_log_populates_course_code_from_path(client, db_pool, study_root):
+async def test_log_populates_course_code_from_path(client, db_conn, study_root):
     """Uploads under a recognisable course folder log events with course_code set."""
     from app.services import storage as svc
-    await _seed_course(db_pool, "ASB")
+    await _seed_course(db_conn, "ASB")
     await svc.upload("ASB/lecture.pdf", b"x")
 
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT course_code, payload FROM events "
             "WHERE kind = 'storage:upload' "
@@ -350,12 +350,12 @@ async def test_log_populates_course_code_from_path(client, db_pool, study_root):
 
 
 @pytest.mark.asyncio
-async def test_log_skips_course_code_for_top_level_files(client, db_pool, study_root):
+async def test_log_skips_course_code_for_top_level_files(client, db_conn, study_root):
     """A file at the root has no leading folder → course_code stays NULL."""
     from app.services import storage as svc
     await svc.upload("just_a_file.txt", b"x")
 
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT course_code FROM events "
             "WHERE kind = 'storage:upload' "
@@ -368,15 +368,15 @@ async def test_log_skips_course_code_for_top_level_files(client, db_pool, study_
 
 
 @pytest.mark.asyncio
-async def test_log_uses_paths_array_for_delete(client, db_pool, study_root):
+async def test_log_uses_paths_array_for_delete(client, db_conn, study_root):
     """`delete()` payload uses `paths: [...]` — _log() picks the first entry."""
     from app.services import storage as svc
-    await _seed_course(db_pool, "EXAM")
+    await _seed_course(db_conn, "EXAM")
     (study_root / "EXAM").mkdir()
     (study_root / "EXAM" / "x.txt").write_bytes(b"y")
     await svc.delete(["EXAM/x.txt"])
 
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "SELECT course_code FROM events "
             "WHERE kind = 'storage:delete' "

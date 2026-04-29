@@ -14,9 +14,9 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 
-async def _seed_course(db_pool, code: str) -> None:
+async def _seed_course(db_conn, code: str) -> None:
     """Insert a courses row so the events FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -25,7 +25,7 @@ async def _seed_course(db_pool, code: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_events_filtered_by_unknown_kind_is_empty(client, db_pool):
+async def test_list_events_filtered_by_unknown_kind_is_empty(client, db_conn):
     """Unknown kind label → empty list (proves filter actually filters)."""
     from app.services import events as svc
     result = await svc.list_events(kind="evt:test:does_not_exist")
@@ -33,7 +33,7 @@ async def test_list_events_filtered_by_unknown_kind_is_empty(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_record_event_minimal(client, db_pool):
+async def test_record_event_minimal(client, db_conn):
     """Bare-minimum event: kind only, no payload, no course."""
     from app.schemas import EventCreate
     from app.services import events as svc
@@ -46,11 +46,11 @@ async def test_record_event_minimal(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_record_event_with_payload_and_course(client, db_pool):
+async def test_record_event_with_payload_and_course(client, db_conn):
     """Full event: payload (jsonb) + course_code FK."""
     from app.schemas import EventCreate
     from app.services import events as svc
-    await _seed_course(db_pool, "EVTA")
+    await _seed_course(db_conn, "EVTA")
     payload = {"action": "studied", "duration_min": 45, "topics": ["a", "b"]}
     created = await svc.record_event(EventCreate(
         kind="evt:test:full",
@@ -64,7 +64,7 @@ async def test_record_event_with_payload_and_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_record_then_list_by_kind(client, db_pool):
+async def test_record_then_list_by_kind(client, db_conn):
     """Inserted events are retrievable via list_events filtered by kind."""
     from app.schemas import EventCreate
     from app.services import events as svc
@@ -82,12 +82,12 @@ async def test_record_then_list_by_kind(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_events_filtered_by_course_code(client, db_pool):
+async def test_list_events_filtered_by_course_code(client, db_conn):
     """Filtering by course_code returns only events for that course."""
     from app.schemas import EventCreate
     from app.services import events as svc
-    await _seed_course(db_pool, "EVTB")
-    await _seed_course(db_pool, "EVTC")
+    await _seed_course(db_conn, "EVTB")
+    await _seed_course(db_conn, "EVTC")
     await svc.record_event(EventCreate(
         kind="evt:test:by_course",
         course_code="EVTB",
@@ -108,7 +108,7 @@ async def test_list_events_filtered_by_course_code(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_events_filtered_by_since(client, db_pool):
+async def test_list_events_filtered_by_since(client, db_conn):
     """`since` filters out events created before the cutoff."""
     from app.schemas import EventCreate
     from app.services import events as svc
@@ -123,7 +123,7 @@ async def test_list_events_filtered_by_since(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_events_orders_newest_first(client, db_pool):
+async def test_list_events_orders_newest_first(client, db_conn):
     """list_events orders by created_at DESC (newest first)."""
     from app.schemas import EventCreate
     from app.services import events as svc
@@ -141,7 +141,7 @@ async def test_list_events_orders_newest_first(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_events_respects_limit(client, db_pool):
+async def test_list_events_respects_limit(client, db_conn):
     """`limit` caps the number of returned rows."""
     from app.schemas import EventCreate
     from app.services import events as svc
@@ -154,7 +154,7 @@ async def test_list_events_respects_limit(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_record_event_missing_course_raises(client, db_pool):
+async def test_record_event_missing_course_raises(client, db_conn):
     """If course_code is given but no such course exists, FK fails."""
     from app.schemas import EventCreate
     from app.services import events as svc

@@ -88,18 +88,27 @@ async def _log(kind: str, payload: dict[str, Any]) -> None:
     course_code = _course_code_from_path(candidate)
 
     payload_json = json.dumps(payload)
+    # Wrap in a savepoint so that a swallowed error (e.g. course_code FK
+    # violation when an unknown course folder appears under STUDY_ROOT)
+    # doesn't poison the surrounding transaction. In prod each db.execute()
+    # opens its own connection so this is irrelevant; under per-test
+    # transaction isolation it's the difference between "events row missed"
+    # and "the entire test's outer transaction is aborted."
     try:
-        if course_code:
-            await db.execute(
-                "INSERT INTO events (kind, course_code, payload) "
-                "VALUES (%s, %s, %s::jsonb)",
-                kind, course_code, payload_json,
-            )
-        else:
-            await db.execute(
-                "INSERT INTO events (kind, payload) VALUES (%s, %s::jsonb)",
-                kind, payload_json,
-            )
+        async with db.db() as conn:
+            async with conn.transaction():
+                if course_code:
+                    await conn.execute(
+                        "INSERT INTO events (kind, course_code, payload) "
+                        "VALUES (%s, %s, %s::jsonb)",
+                        (kind, course_code, payload_json),
+                    )
+                else:
+                    await conn.execute(
+                        "INSERT INTO events (kind, payload) "
+                        "VALUES (%s, %s::jsonb)",
+                        (kind, payload_json),
+                    )
     except Exception:
         pass
 

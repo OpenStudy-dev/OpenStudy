@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 import pytest
 
 
-async def _seed_course(db_pool, code: str = "TEST") -> None:
+async def _seed_course(db_conn, code: str = "TEST") -> None:
     """Insert a courses row so deliverable FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -15,17 +15,17 @@ async def _seed_course(db_pool, code: str = "TEST") -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_deliverables_empty(client, db_pool):
+async def test_list_deliverables_empty(client, db_conn):
     from app.services import deliverables as svc
     result = await svc.list_deliverables()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_create_then_list(client, db_pool):
+async def test_create_then_list(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "DEL1")
+    await _seed_course(db_conn, "DEL1")
     created = await svc.create_deliverable(DeliverableCreate(
         course_code="DEL1",
         kind="submission",
@@ -47,11 +47,11 @@ async def test_create_then_list(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_deliverables_filtered_by_course(client, db_pool):
+async def test_list_deliverables_filtered_by_course(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "AAA")
-    await _seed_course(db_pool, "BBB")
+    await _seed_course(db_conn, "AAA")
+    await _seed_course(db_conn, "BBB")
     await svc.create_deliverable(DeliverableCreate(
         course_code="AAA", name="A-set",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -69,10 +69,10 @@ async def test_list_deliverables_filtered_by_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_deliverables_filtered_by_status(client, db_pool):
+async def test_list_deliverables_filtered_by_status(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "STA")
+    await _seed_course(db_conn, "STA")
     await svc.create_deliverable(DeliverableCreate(
         course_code="STA", name="open-one", status="open",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -88,10 +88,10 @@ async def test_list_deliverables_filtered_by_status(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_deliverables_filtered_by_due_before(client, db_pool):
+async def test_list_deliverables_filtered_by_due_before(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "DUE")
+    await _seed_course(db_conn, "DUE")
     await svc.create_deliverable(DeliverableCreate(
         course_code="DUE", name="early",
         due_at=datetime(2026, 4, 15, tzinfo=timezone.utc),
@@ -107,7 +107,7 @@ async def test_list_deliverables_filtered_by_due_before(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_create_deliverable_missing_course_raises(client, db_pool):
+async def test_create_deliverable_missing_course_raises(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
     # No course seeded — FK violation expected.
@@ -119,10 +119,10 @@ async def test_create_deliverable_missing_course_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_deliverable(client, db_pool):
+async def test_update_deliverable(client, db_conn):
     from app.schemas import DeliverableCreate, DeliverablePatch
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "UPD")
+    await _seed_course(db_conn, "UPD")
     created = await svc.create_deliverable(DeliverableCreate(
         course_code="UPD", name="Original",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -138,7 +138,7 @@ async def test_update_deliverable(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_deliverable_empty_patch_raises(client, db_pool):
+async def test_update_deliverable_empty_patch_raises(client, db_conn):
     from app.schemas import DeliverablePatch
     from app.services import deliverables as svc
     with pytest.raises(ValueError):
@@ -149,7 +149,7 @@ async def test_update_deliverable_empty_patch_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_deliverable_missing_id_raises(client, db_pool):
+async def test_update_deliverable_missing_id_raises(client, db_conn):
     from app.schemas import DeliverablePatch
     from app.services import deliverables as svc
     with pytest.raises(ValueError):
@@ -160,10 +160,10 @@ async def test_update_deliverable_missing_id_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_mark_submitted_flips_status(client, db_pool):
+async def test_mark_submitted_flips_status(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "SUB")
+    await _seed_course(db_conn, "SUB")
     created = await svc.create_deliverable(DeliverableCreate(
         course_code="SUB", name="To submit",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -176,10 +176,10 @@ async def test_mark_submitted_flips_status(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_mark_submitted_idempotent(client, db_pool):
+async def test_mark_submitted_idempotent(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "IDM")
+    await _seed_course(db_conn, "IDM")
     created = await svc.create_deliverable(DeliverableCreate(
         course_code="IDM", name="Idempotent",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -194,10 +194,10 @@ async def test_mark_submitted_idempotent(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_reopen_deliverable_flips_status(client, db_pool):
+async def test_reopen_deliverable_flips_status(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "REO")
+    await _seed_course(db_conn, "REO")
     created = await svc.create_deliverable(DeliverableCreate(
         course_code="REO", name="To reopen",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -210,10 +210,10 @@ async def test_reopen_deliverable_flips_status(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_delete_deliverable(client, db_pool):
+async def test_delete_deliverable(client, db_conn):
     from app.schemas import DeliverableCreate
     from app.services import deliverables as svc
-    await _seed_course(db_pool, "DELE")
+    await _seed_course(db_conn, "DELE")
     created = await svc.create_deliverable(DeliverableCreate(
         course_code="DELE", name="Doomed",
         due_at=datetime(2026, 5, 1, tzinfo=timezone.utc),

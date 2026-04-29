@@ -4,9 +4,9 @@ from datetime import date
 import pytest
 
 
-async def _seed_course(db_pool, code: str = "TEST") -> None:
+async def _seed_course(db_conn, code: str = "TEST") -> None:
     """Insert a courses row so study_topics FK constraint is satisfied."""
-    async with db_pool.connection() as conn, conn.cursor() as cur:
+    async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO courses (code, full_name) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING",
@@ -15,17 +15,17 @@ async def _seed_course(db_pool, code: str = "TEST") -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_study_topics_empty(client, db_pool):
+async def test_list_study_topics_empty(client, db_conn):
     from app.services import study_topics as svc
     result = await svc.list_study_topics()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_create_then_list(client, db_pool):
+async def test_create_then_list(client, db_conn):
     from app.schemas import StudyTopicCreate
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "ST1")
+    await _seed_course(db_conn, "ST1")
     created = await svc.create_study_topic(StudyTopicCreate(
         course_code="ST1",
         chapter="1",
@@ -51,11 +51,11 @@ async def test_create_then_list(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_study_topics_filtered_by_course(client, db_pool):
+async def test_list_study_topics_filtered_by_course(client, db_conn):
     from app.schemas import StudyTopicCreate
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "AAA")
-    await _seed_course(db_pool, "BBB")
+    await _seed_course(db_conn, "AAA")
+    await _seed_course(db_conn, "BBB")
     await svc.create_study_topic(StudyTopicCreate(
         course_code="AAA", name="A-topic",
     ))
@@ -71,10 +71,10 @@ async def test_list_study_topics_filtered_by_course(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_list_study_topics_filtered_by_status(client, db_pool):
+async def test_list_study_topics_filtered_by_status(client, db_conn):
     from app.schemas import StudyTopicCreate
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "STA")
+    await _seed_course(db_conn, "STA")
     await svc.create_study_topic(StudyTopicCreate(
         course_code="STA", name="open-topic", status="not_started",
     ))
@@ -88,10 +88,10 @@ async def test_list_study_topics_filtered_by_status(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_study_topic(client, db_pool):
+async def test_update_study_topic(client, db_conn):
     from app.schemas import StudyTopicCreate, StudyTopicPatch
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "UPD")
+    await _seed_course(db_conn, "UPD")
     created = await svc.create_study_topic(StudyTopicCreate(
         course_code="UPD", name="Original", status="not_started",
     ))
@@ -106,10 +106,10 @@ async def test_update_study_topic(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_study_topic_studied_sets_last_reviewed_at(client, db_pool):
+async def test_update_study_topic_studied_sets_last_reviewed_at(client, db_conn):
     from app.schemas import StudyTopicCreate, StudyTopicPatch
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "STD")
+    await _seed_course(db_conn, "STD")
     created = await svc.create_study_topic(StudyTopicCreate(
         course_code="STD", name="To-review", status="not_started",
     ))
@@ -122,10 +122,10 @@ async def test_update_study_topic_studied_sets_last_reviewed_at(client, db_pool)
 
 
 @pytest.mark.asyncio
-async def test_update_study_topic_mastered_sets_last_reviewed_at(client, db_pool):
+async def test_update_study_topic_mastered_sets_last_reviewed_at(client, db_conn):
     from app.schemas import StudyTopicCreate, StudyTopicPatch
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "MST")
+    await _seed_course(db_conn, "MST")
     created = await svc.create_study_topic(StudyTopicCreate(
         course_code="MST", name="Master-this",
     ))
@@ -137,7 +137,7 @@ async def test_update_study_topic_mastered_sets_last_reviewed_at(client, db_pool
 
 
 @pytest.mark.asyncio
-async def test_update_study_topic_empty_patch_raises(client, db_pool):
+async def test_update_study_topic_empty_patch_raises(client, db_conn):
     from app.schemas import StudyTopicPatch
     from app.services import study_topics as svc
     with pytest.raises(ValueError):
@@ -148,7 +148,7 @@ async def test_update_study_topic_empty_patch_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_update_study_topic_missing_id_raises(client, db_pool):
+async def test_update_study_topic_missing_id_raises(client, db_conn):
     from app.schemas import StudyTopicPatch
     from app.services import study_topics as svc
     with pytest.raises(ValueError):
@@ -159,10 +159,10 @@ async def test_update_study_topic_missing_id_raises(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_delete_study_topic(client, db_pool):
+async def test_delete_study_topic(client, db_conn):
     from app.schemas import StudyTopicCreate
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "DEL")
+    await _seed_course(db_conn, "DEL")
     created = await svc.create_study_topic(StudyTopicCreate(
         course_code="DEL", name="Doomed",
     ))
@@ -172,12 +172,12 @@ async def test_delete_study_topic(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_add_lecture_topics_with_existing_lecture_id(client, db_pool):
+async def test_add_lecture_topics_with_existing_lecture_id(client, db_conn):
     """Bulk-insert topics linked to an existing lecture (no auto-create)."""
     from app.schemas import LectureCreate, LectureTopicsAdd
     from app.services import lectures as lectures_svc
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "LEC")
+    await _seed_course(db_conn, "LEC")
     lec = await lectures_svc.create_lecture(LectureCreate(
         course_code="LEC", number=1, held_on=date(2026, 4, 10), kind="lecture",
         title="Wk1",
@@ -211,12 +211,12 @@ async def test_add_lecture_topics_with_existing_lecture_id(client, db_pool):
 
 
 @pytest.mark.asyncio
-async def test_add_lecture_topics_auto_creates_lecture(client, db_pool):
+async def test_add_lecture_topics_auto_creates_lecture(client, db_conn):
     """When create_lecture is set and no lecture_id, auto-create the lecture."""
     from app.schemas import LectureCreate, LectureTopicsAdd
     from app.services import lectures as lectures_svc
     from app.services import study_topics as svc
-    await _seed_course(db_pool, "AUT")
+    await _seed_course(db_conn, "AUT")
     payload = LectureTopicsAdd(
         course_code="AUT",
         covered_on=date(2026, 4, 12),

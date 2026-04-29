@@ -4,8 +4,8 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_pg_container_has_baseline_schema(db_pool):
-    async with db_pool.connection() as conn:
+async def test_pg_container_has_baseline_schema(db_conn):
+    async with db_conn.connection() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "SELECT count(*) AS n FROM information_schema.tables "

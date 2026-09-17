@@ -54,6 +54,17 @@ class Settings(BaseSettings):
     login_attempts_window_min: int = 10
     login_attempts_max: int = 5
 
+    # Dynamic Client Registration (/oauth/register) — per-IP. Every attempt
+    # counts, valid or not: the thing being bounded is unauthenticated row
+    # creation, not brute force. 20/hour is far above what any real MCP
+    # client needs (Claude.ai registers once per connector).
+    register_window_min: int = 60
+    register_max: int = 20
+
+    # OAuth access-token lifetime. Bounds the window a phished consent stays
+    # useful. MCP clients re-run the consent flow on expiry.
+    oauth_token_ttl_days: int = 30
+
     secrets_encryption_key: str = Field(default="", description="Fernet master key (mint with cryptography.fernet.Fernet.generate_key())")
 
     # Email — Phase 3+

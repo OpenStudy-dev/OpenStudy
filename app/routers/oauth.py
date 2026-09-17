@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import html
 from typing import Any, Optional
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlsplit
 
 from fastapi import APIRouter, Body, Cookie, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -21,6 +21,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 from ..auth import COOKIE_NAME, optional_auth, require_user, User
 from ..config import get_settings
+from ..ratelimit import check_register_rate, record_auth_attempt
 from ..services import oauth as oauth_svc
 
 _CONSENT_COOKIE = "oauth_consent_state"
@@ -48,10 +49,10 @@ def _safe_redirect_uri(uri: str) -> str:
     the URI unchanged if safe, an empty string if not. Empty string is
     treated as 'no Deny link' downstream.
 
-    OAuth 2.1 already requires `redirect_uri` to be pre-registered, so this
-    is defence in depth — Dynamic Client Registration (`/oauth/register`)
-    currently has no allow-list filter, and a misconfigured client could
-    still wind up here.
+    OAuth 2.1 already requires `redirect_uri` to be pre-registered, and
+    `/oauth/register` now rejects these schemes up front via
+    `oauth_svc.redirect_uri_error`. This is defence in depth for rows that
+    predate that validation.
     """
     lowered = uri.strip().lower()
     for bad in ("javascript:", "data:", "vbscript:", "file:"):
@@ -100,17 +101,67 @@ async def oauth_authorization_server(request: Request) -> JSONResponse:
 
 # ─────────────────────── Dynamic Client Registration (RFC 7591) ───────────────────────
 
+_MAX_REDIRECT_URIS = 10
+_MAX_CLIENT_NAME = 100
+
+
+def _dcr_error(error: str, description: str) -> JSONResponse:
+    """RFC 7591 §3.2.2 error response."""
+    return JSONResponse(
+        status_code=400, content={"error": error, "error_description": description}
+    )
+
+
 @router.post("/oauth/register", include_in_schema=False)
-async def register_client(body: dict[str, Any] = Body(...)) -> JSONResponse:
-    redirect_uris = body.get("redirect_uris") or []
-    if not redirect_uris or not isinstance(redirect_uris, list):
-        raise HTTPException(400, "redirect_uris required")
+async def register_client(request: Request, body: dict[str, Any] = Body(...)) -> JSONResponse:
+    """Deliberately unauthenticated. The MCP authorization spec requires open
+    DCR so clients like Claude.ai can self-register without an operator in
+    the loop. What makes that safe is everything around it: a per-IP rate
+    limit, strict redirect_uri validation, metadata caps, stale-client
+    pruning, and a consent screen that tells the user exactly where the
+    auth code is going (see SECURITY.md, "OAuth client registration").
+    """
+    await check_register_rate(request)
+
+    async def reject(error: str, description: str) -> JSONResponse:
+        # Rejected attempts still count toward the rate limit.
+        await record_auth_attempt(request, ok=False, kind="register")
+        return _dcr_error(error, description)
+
+    name = body.get("client_name")
+    if name is None:
+        name = "Unnamed client"
+    if not isinstance(name, str):
+        return await reject("invalid_client_metadata", "client_name must be a string")
+    # Strip control characters so the name can't smuggle newlines into logs
+    # or the consent page.
+    name = "".join(ch for ch in name if ch.isprintable()).strip() or "Unnamed client"
+    if len(name) > _MAX_CLIENT_NAME:
+        return await reject(
+            "invalid_client_metadata", f"client_name too long (max {_MAX_CLIENT_NAME})"
+        )
+
+    redirect_uris = body.get("redirect_uris")
+    if not isinstance(redirect_uris, list) or not redirect_uris:
+        return await reject("invalid_client_metadata", "redirect_uris required")
+    if len(redirect_uris) > _MAX_REDIRECT_URIS:
+        return await reject(
+            "invalid_client_metadata", f"too many redirect_uris (max {_MAX_REDIRECT_URIS})"
+        )
+    for uri in redirect_uris:
+        why = oauth_svc.redirect_uri_error(uri)
+        if why:
+            shown = str(uri)[:200]
+            return await reject("invalid_redirect_uri", f"{shown!r}: {why}")
+
+    await oauth_svc.prune_stale_clients()
     client = await oauth_svc.create_client(
-        client_name=body.get("client_name") or "Unnamed client",
+        client_name=name,
         redirect_uris=redirect_uris,
         token_endpoint_auth_method="none",
         public=True,
     )
+    await record_auth_attempt(request, ok=True, kind="register")
     return JSONResponse(
         status_code=201,
         content={
@@ -172,6 +223,11 @@ async def authorize(
     safe_client_id = html.escape(client_id, quote=True)
     safe_redirect = _safe_redirect_uri(redirect_uri)
     safe_redirect_attr = html.escape(safe_redirect, quote=True)
+    # Shown to the user so a phished consent is at least an informed one:
+    # client_name is self-asserted by whoever registered the client, so the
+    # only trustworthy signal is where the auth code will actually be sent.
+    safe_redirect_host = html.escape(urlsplit(redirect_uri).hostname or redirect_uri, quote=True)
+    safe_redirect_full = html.escape(redirect_uri, quote=True)
     safe_challenge = html.escape(code_challenge, quote=True)
     safe_method = html.escape(code_challenge_method or "S256", quote=True)
     safe_scope = html.escape(scope or "", quote=True)
@@ -199,6 +255,10 @@ async def authorize(
     p {{ color: #a8acb3; font-size: 0.9rem; line-height: 1.5; margin: 0.75rem 0 0; }}
     .name {{ color: #fafafa; font-weight: 600; }}
     ul {{ color: #a8acb3; font-size: 0.85rem; padding-left: 1.2rem; margin: 0.75rem 0 0; line-height: 1.6; }}
+    .notice {{ margin-top: 1.25rem; padding: 0.85rem 1rem; border-radius: 10px; background: #26200f; border: 1px solid #5a4a1a; color: #e8d9a8; font-size: 0.85rem; line-height: 1.5; }}
+    .notice strong {{ color: #f5e6b8; }}
+    .notice code {{ display: block; margin: 0.4rem 0; padding: 0.4rem 0.55rem; border-radius: 6px; background: #1a1a1c; color: #fafafa; font-size: 0.8rem; word-break: break-all; }}
+    .notice .host {{ font-weight: 600; color: #fafafa; }}
     .actions {{ display: flex; gap: 0.5rem; margin-top: 1.75rem; }}
     button, a.btn {{ flex: 1; padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid #2a2d31; font-size: 0.9rem; font-weight: 500; cursor: pointer; text-align: center; text-decoration: none; color: #fafafa; background: transparent; font-family: inherit; }}
     button.primary {{ background: #fafafa; color: #0f0f11; border-color: #fafafa; }}
@@ -217,6 +277,13 @@ async def authorize(
       <li>Create, update, and delete those same resources</li>
       <li>Record activity events</li>
     </ul>
+    <div class="notice">
+      <strong>{safe_name}</strong> is not verified by OpenStudy — the name is chosen by the app itself.
+      If you approve, an access code will be sent to <span class="host">{safe_redirect_host}</span>:
+      <code>{safe_redirect_full}</code>
+      Only approve if you started this connection yourself (for example from Claude.ai's connector settings).
+      If you arrived here from a link someone sent you, deny.
+    </div>
     <form method="post" action="/oauth/consent" class="actions">
       <input type="hidden" name="client_id" value="{safe_client_id}">
       <input type="hidden" name="redirect_uri" value="{safe_redirect_attr}">

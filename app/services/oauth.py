@@ -12,13 +12,19 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from .. import db
+from ..config import get_settings
 
 
 AUTH_CODE_TTL_SEC = 600  # 10 min
-ACCESS_TOKEN_TTL_SEC = 90 * 24 * 60 * 60  # 90 days
+STALE_CLIENT_DAYS = 7  # DCR clients that never finished a flow are pruned after this
+
+# http:// is only acceptable on loopback — that's how local MCP dev servers
+# and CLI tools receive their callback. Everything else must be https.
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
 def _gen(n: int = 32) -> str:
@@ -30,6 +36,53 @@ def _now() -> datetime:
 
 
 # ─────────────────────── Clients ───────────────────────
+
+def redirect_uri_error(uri: object) -> Optional[str]:
+    """Return None if `uri` is acceptable for registration, else a short
+    human-readable reason.
+
+    Open DCR means the URI is attacker-supplied. We can't allow-list (the
+    whole point of DCR is that clients we've never heard of can register)
+    but we can refuse the shapes that only ever serve an attacker:
+    non-https on a real host, fragments, wildcards, non-absolute URIs.
+    """
+    if not isinstance(uri, str):
+        return "must be a string"
+    if not uri or uri != uri.strip():
+        return "must be non-empty with no surrounding whitespace"
+    if len(uri) > 2048:
+        return "too long (max 2048)"
+    if "*" in uri:
+        return "wildcards are not allowed"
+    parts = urlsplit(uri)
+    if parts.scheme not in ("http", "https"):
+        return "scheme must be https"
+    if parts.fragment or uri.endswith("#"):
+        return "must not contain a fragment"
+    host = (parts.hostname or "").lower()
+    if not host:
+        return "must be an absolute URI with a host"
+    if parts.scheme == "https":
+        return None
+    if host in _LOOPBACK_HOSTS:
+        return None
+    return "http is only allowed for loopback (localhost / 127.0.0.1 / ::1); use https"
+
+
+async def prune_stale_clients() -> None:
+    """Delete DCR clients older than STALE_CLIENT_DAYS that never produced
+    a token or auth code. Anyone can create a client row; this keeps the
+    table bounded to clients that actually completed a flow. Clients with
+    live tokens are untouched (the FK is ON DELETE CASCADE, so we must
+    never delete one that's in use)."""
+    await db.execute(
+        "DELETE FROM oauth_clients c "
+        "WHERE c.created_at < now() - make_interval(days => %s) "
+        "  AND NOT EXISTS (SELECT 1 FROM oauth_tokens t WHERE t.client_id = c.client_id) "
+        "  AND NOT EXISTS (SELECT 1 FROM oauth_auth_codes a WHERE a.client_id = c.client_id)",
+        STALE_CLIENT_DAYS,
+    )
+
 
 async def create_client(
     *,
@@ -131,13 +184,14 @@ async def consume_auth_code(
 
 async def create_access_token(user_id: UUID, client_id: str, scope: Optional[str]) -> tuple[str, int]:
     token = _gen(48)
-    expires_at = _now() + timedelta(seconds=ACCESS_TOKEN_TTL_SEC)
+    ttl_sec = get_settings().oauth_token_ttl_days * 24 * 60 * 60
+    expires_at = _now() + timedelta(seconds=ttl_sec)
     await db.execute(
         "INSERT INTO oauth_tokens "
         "(user_id, token, client_id, scope, expires_at) VALUES (%s, %s, %s, %s, %s)",
         user_id, token, client_id, scope, expires_at,
     )
-    return token, ACCESS_TOKEN_TTL_SEC
+    return token, ttl_sec
 
 
 async def verify_access_token(token: str) -> Optional[dict[str, Any]]:
@@ -162,6 +216,8 @@ async def revoke_token(token: str) -> None:
 
 
 __all__ = [
+    "redirect_uri_error",
+    "prune_stale_clients",
     "create_client",
     "get_client",
     "create_auth_code",

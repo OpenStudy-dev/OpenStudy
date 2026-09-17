@@ -12,7 +12,7 @@ from . import db
 from .config import get_settings
 
 
-Kind = Literal["login", "signup", "reset"]
+Kind = Literal["login", "signup", "reset", "register"]
 
 
 def client_ip(request: Request) -> str:
@@ -51,6 +51,25 @@ async def check_auth_rate(request: Request, kind: Kind = "login") -> None:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"too many {kind} attempts; try again in {s.login_attempts_window_min} min",
+        )
+
+
+async def check_register_rate(request: Request) -> None:
+    """Per-IP cap on /oauth/register (RFC 7591 DCR). Unlike login, every
+    attempt counts — rejected ones included — so an attacker can't probe the
+    redirect_uri validator for free."""
+    s = get_settings()
+    ip = client_ip(request)
+    since = datetime.now(timezone.utc) - timedelta(minutes=s.register_window_min)
+    n = await db.fetchval(
+        "SELECT count(*) FROM auth_attempts "
+        "WHERE ip = %s AND kind = 'register' AND at >= %s",
+        ip, since,
+    )
+    if (n or 0) >= s.register_max:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"too many client registrations; try again in {s.register_window_min} min",
         )
 
 

@@ -4,6 +4,35 @@ All notable changes to OpenStudy will be documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Security
+
+Hardened RFC 7591 Dynamic Client Registration (`POST /oauth/register`).
+Open registration is required by the MCP spec and stays open; what changed
+is everything around it, following a responsible-disclosure report about a
+consent-phishing path via attacker-controlled redirect URIs (see
+`SECURITY.md` → Acknowledgements).
+
+- **Rate limit** on `/oauth/register` — per-IP, counts rejected attempts
+  too. New settings `REGISTER_MAX` (default 20) and `REGISTER_WINDOW_MIN`
+  (default 60).
+- **redirect_uri validation** at registration — `https` required (plain
+  `http` only for `localhost` / `127.0.0.1` / `::1`), no fragments, no
+  wildcards, must be absolute with a host. Errors use the RFC 7591
+  `{error, error_description}` shape.
+- **Metadata caps** — max 10 redirect URIs, `client_name` ≤ 100 chars,
+  control characters stripped.
+- **Consent screen** now shows the exact redirect URI the code will be
+  sent to and states the client name is self-asserted / unverified.
+- **Access-token lifetime** is now configurable via `OAUTH_TOKEN_TTL_DAYS`
+  and defaults to **30 days** (was a hard-coded 90). Existing tokens are
+  unaffected; MCP clients re-consent on expiry.
+- **Stale-client pruning** — DCR clients that never issue a token or auth
+  code are deleted after 7 days.
+- Migration `20260917000001_auth_attempts_register_kind.sql` adds
+  `kind='register'` to `auth_attempts`.
+
 ## v0.7.0 — Multi-tenant ready
 
 The multi-tenant migration (Phases 0-7) is complete. OpenStudy can now be

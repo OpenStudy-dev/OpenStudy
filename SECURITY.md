@@ -63,5 +63,6 @@ Out of scope:
 
 We credit researchers who report responsibly, in the form they prefer.
 
-- 2026-09: Anonymous researcher. Consent-phishing path via open client
-  registration with an attacker-controlled redirect URI.
+- 2026-09: [Md Rabbi Hossain](https://x.com/csrrabbi). Consent-phishing
+  path via open client registration with an attacker-controlled redirect
+  URI.

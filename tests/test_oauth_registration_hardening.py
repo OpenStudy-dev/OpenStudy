@@ -10,7 +10,9 @@ guard-rails that make open DCR safe:
   - per-IP rate limiting on registration
   - consent screen shows where the auth code will be sent and warns that
     the client is unverified
-  - stale, never-used clients are pruned
+  - registered clients are never deleted behind the client's back (MCP
+    clients cache their client_id indefinitely)
+  - loopback redirect URIs match on any port (RFC 8252 §7.3)
 """
 from __future__ import annotations
 
@@ -242,42 +244,128 @@ async def test_consent_page_escapes_redirect_host(https_client):
     assert "&lt;b&gt;bold&lt;/b&gt;" in resp.text
 
 
-# ─────────────────────── stale client pruning ───────────────────────
+# ─────────────────────── client persistence ───────────────────────
 
-async def test_stale_unused_clients_are_pruned_on_register(https_client, db_conn):
-    # A client registered 8 days ago that never completed an auth flow.
+async def test_register_never_deletes_existing_clients(https_client, db_conn):
+    """Regression: a prune on register deleted a Claude Code client that had
+    registered weeks earlier but never finished a login. Claude Code caches
+    its client_id, so it kept presenting the deleted ID and every authorize
+    failed with "unknown client_id". Registration must leave existing
+    clients alone, however old and unused."""
     async with db_conn.connection() as conn, conn.cursor() as cur:
         await cur.execute(
             "INSERT INTO oauth_clients (client_id, client_name, redirect_uris, created_at) "
-            "VALUES ('stale-1', 'Stale', ARRAY['https://s.test/cb'], now() - interval '8 days')"
-        )
-        # A client of the same age that DID get a token — must survive.
-        await cur.execute(
-            "INSERT INTO oauth_clients (client_id, client_name, redirect_uris, created_at) "
-            "VALUES ('used-1', 'Used', ARRAY['https://u.test/cb'], now() - interval '8 days')"
-        )
-        await cur.execute(
-            "INSERT INTO oauth_tokens (user_id, token, client_id, expires_at) "
-            "SELECT id, 'tok-used-1', 'used-1', now() + interval '1 day' "
-            "FROM users WHERE email = %s",
-            (_OPERATOR_EMAIL,),
-        )
-        # A fresh unused client — must survive (still inside the grace window).
-        await cur.execute(
-            "INSERT INTO oauth_clients (client_id, client_name, redirect_uris, created_at) "
-            "VALUES ('fresh-1', 'Fresh', ARRAY['https://f.test/cb'], now() - interval '1 hour')"
+            "VALUES ('old-unused', 'Claude Code', ARRAY['http://localhost:3118/callback'], "
+            "now() - interval '60 days')"
         )
 
     resp = await _register(https_client, ["https://trigger.test/cb"])
     assert resp.status_code == 201
 
     async with db_conn.connection() as conn, conn.cursor() as cur:
-        await cur.execute(
-            "SELECT client_id FROM oauth_clients WHERE client_id IN ('stale-1','used-1','fresh-1') "
-            "ORDER BY client_id"
-        )
-        rows = [r["client_id"] if isinstance(r, dict) else r[0] for r in await cur.fetchall()]
-    assert rows == ["fresh-1", "used-1"]
+        await cur.execute("SELECT 1 FROM oauth_clients WHERE client_id = 'old-unused'")
+        assert await cur.fetchone() is not None
+
+
+# ─────────────────────── loopback redirect ports (RFC 8252 §7.3) ───────────────────────
+
+async def _authorize(client: AsyncClient, client_id: str, uri: str):
+    _, challenge = _pkce_pair()
+    return await client.get(
+        "/oauth/authorize",
+        params={
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": uri,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    "registered, requested",
+    [
+        ("http://localhost:3118/callback", "http://localhost:49152/callback"),
+        ("http://localhost:3118/callback", "http://localhost/callback"),
+        ("http://127.0.0.1:8080/cb", "http://127.0.0.1:61000/cb"),
+        ("http://[::1]:8080/cb", "http://[::1]:9090/cb"),
+    ],
+)
+async def test_authorize_accepts_loopback_redirect_on_any_port(https_client, registered, requested):
+    client_id = await _register_and_login(https_client, registered, "Loopback")
+    resp = await _authorize(https_client, client_id, requested)
+    assert resp.status_code == 200, resp.text
+
+
+@pytest.mark.parametrize(
+    "registered, requested",
+    [
+        # path must still match exactly
+        ("http://localhost:3118/callback", "http://localhost:3118/other"),
+        # host must still match exactly (localhost is not 127.0.0.1)
+        ("http://localhost:3118/callback", "http://127.0.0.1:3118/callback"),
+        # port flexibility is loopback-only
+        ("https://example.test/cb", "https://example.test:8443/cb"),
+        # scheme must match
+        ("http://localhost:3118/callback", "https://localhost:3118/callback"),
+        # query must match
+        ("http://localhost:3118/callback", "http://localhost:3118/callback?x=1"),
+    ],
+)
+async def test_authorize_rejects_other_redirect_differences(https_client, registered, requested):
+    client_id = await _register_and_login(https_client, registered, "Strict")
+    resp = await _authorize(https_client, client_id, requested)
+    assert resp.status_code == 400
+
+
+async def test_full_flow_with_loopback_port_change(https_client):
+    """Consent and token exchange both honour the requested loopback port."""
+    registered = "http://localhost:3118/callback"
+    requested = "http://localhost:50123/callback"
+    client_id = await _register_and_login(https_client, registered, "Claude Code")
+    verifier, challenge = _pkce_pair()
+
+    auth = await https_client.get(
+        "/oauth/authorize",
+        params={
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": requested,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+            "state": "s1",
+        },
+    )
+    assert auth.status_code == 200
+
+    consent = await https_client.post(
+        "/oauth/consent",
+        data={
+            "client_id": client_id,
+            "redirect_uri": requested,
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+            "state": "s1",
+        },
+        follow_redirects=False,
+    )
+    assert consent.status_code == 302
+    location = consent.headers["location"]
+    assert location.startswith(requested + "?")
+    code = location.split("code=")[1].split("&")[0]
+
+    tok = await https_client.post(
+        "/oauth/token",
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": requested,
+            "client_id": client_id,
+            "code_verifier": verifier,
+        },
+    )
+    assert tok.status_code == 200, tok.text
 
 
 # ─────────────────────── token TTL ───────────────────────

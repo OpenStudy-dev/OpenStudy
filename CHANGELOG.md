@@ -28,10 +28,19 @@ consent-phishing path via attacker-controlled redirect URIs (see
 - **Access-token lifetime** is now configurable via `OAUTH_TOKEN_TTL_DAYS`
   and defaults to **30 days** (was a hard-coded 90). Existing tokens are
   unaffected; MCP clients re-consent on expiry.
-- **Stale-client pruning** — DCR clients that never issue a token or auth
-  code are deleted after 7 days.
 - Migration `20260917000001_auth_attempts_register_kind.sql` adds
   `kind='register'` to `auth_attempts`.
+
+### Fixed
+
+- **"unknown client_id" for Claude Code.** An earlier change in this
+  release deleted registered clients that had not completed a login within
+  7 days. MCP clients cache their `client_id`, so a deleted row broke them
+  permanently. Registration no longer deletes anything.
+- **Loopback redirect URIs match on any port** (RFC 8252 §7.3), so a
+  native client that registered `http://localhost:3118/callback` can log
+  in from whatever local port it binds next time. Scheme, host, path and
+  query still have to match exactly.
 
 ## v0.7.0 — Multi-tenant ready
 

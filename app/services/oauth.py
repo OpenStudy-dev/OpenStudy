@@ -20,7 +20,6 @@ from ..config import get_settings
 
 
 AUTH_CODE_TTL_SEC = 600  # 10 min
-STALE_CLIENT_DAYS = 7  # DCR clients that never finished a flow are pruned after this
 
 # http:// is only acceptable on loopback — that's how local MCP dev servers
 # and CLI tools receive their callback. Everything else must be https.
@@ -69,19 +68,40 @@ def redirect_uri_error(uri: object) -> Optional[str]:
     return "http is only allowed for loopback (localhost / 127.0.0.1 / ::1); use https"
 
 
-async def prune_stale_clients() -> None:
-    """Delete DCR clients older than STALE_CLIENT_DAYS that never produced
-    a token or auth code. Anyone can create a client row; this keeps the
-    table bounded to clients that actually completed a flow. Clients with
-    live tokens are untouched (the FK is ON DELETE CASCADE, so we must
-    never delete one that's in use)."""
-    await db.execute(
-        "DELETE FROM oauth_clients c "
-        "WHERE c.created_at < now() - make_interval(days => %s) "
-        "  AND NOT EXISTS (SELECT 1 FROM oauth_tokens t WHERE t.client_id = c.client_id) "
-        "  AND NOT EXISTS (SELECT 1 FROM oauth_auth_codes a WHERE a.client_id = c.client_id)",
-        STALE_CLIENT_DAYS,
-    )
+def redirect_uri_matches(requested: str, registered: list[str]) -> bool:
+    """True if `requested` is one of the client's registered redirect URIs.
+
+    Exact string match, with one exception from RFC 8252 §7.3: for loopback
+    hosts the port is ignored, because native clients (Claude Code, CLI
+    tools) bind whatever local port is free at login time and may not get
+    the one they registered with. Scheme, host, path and query must still
+    match exactly.
+    """
+    if requested in registered:
+        return True
+    try:
+        req = urlsplit(requested)
+        req.port  # raises ValueError on a malformed port
+    except ValueError:
+        return False
+    host = (req.hostname or "").lower()
+    if host not in _LOOPBACK_HOSTS:
+        return False
+    for uri in registered:
+        try:
+            reg = urlsplit(uri)
+            reg.port
+        except ValueError:
+            continue
+        if (
+            reg.scheme == req.scheme
+            and (reg.hostname or "").lower() == host
+            and reg.path == req.path
+            and reg.query == req.query
+            and not req.fragment
+        ):
+            return True
+    return False
 
 
 async def create_client(
@@ -217,7 +237,7 @@ async def revoke_token(token: str) -> None:
 
 __all__ = [
     "redirect_uri_error",
-    "prune_stale_clients",
+    "redirect_uri_matches",
     "create_client",
     "get_client",
     "create_auth_code",

@@ -117,9 +117,12 @@ async def register_client(request: Request, body: dict[str, Any] = Body(...)) ->
     """Deliberately unauthenticated. The MCP authorization spec requires open
     DCR so clients like Claude.ai can self-register without an operator in
     the loop. What makes that safe is everything around it: a per-IP rate
-    limit, strict redirect_uri validation, metadata caps, stale-client
-    pruning, and a consent screen that tells the user exactly where the
-    auth code is going (see SECURITY.md, "OAuth client registration").
+    limit, strict redirect_uri validation, metadata caps, and a consent
+    screen that tells the user exactly where the auth code is going.
+
+    Registered clients are never deleted here: MCP clients cache their
+    client_id indefinitely, so removing a row breaks them until the user
+    clears the client's stored credentials.
     """
     await check_register_rate(request)
 
@@ -154,7 +157,6 @@ async def register_client(request: Request, body: dict[str, Any] = Body(...)) ->
             shown = str(uri)[:200]
             return await reject("invalid_redirect_uri", f"{shown!r}: {why}")
 
-    await oauth_svc.prune_stale_clients()
     client = await oauth_svc.create_client(
         client_name=name,
         redirect_uris=redirect_uris,
@@ -197,7 +199,7 @@ async def authorize(
     client = await oauth_svc.get_client(client_id)
     if not client:
         raise HTTPException(400, "unknown client_id")
-    if redirect_uri not in client["redirect_uris"]:
+    if not oauth_svc.redirect_uri_matches(redirect_uri, client["redirect_uris"]):
         raise HTTPException(400, "redirect_uri not registered for client")
 
     authed = await optional_auth(study_session)
@@ -347,7 +349,7 @@ async def consent(
         raise HTTPException(400, "consent state invalid")
 
     client = await oauth_svc.get_client(client_id)
-    if not client or redirect_uri not in client["redirect_uris"]:
+    if not client or not oauth_svc.redirect_uri_matches(redirect_uri, client["redirect_uris"]):
         raise HTTPException(400, "invalid client/redirect")
 
     code = await oauth_svc.create_auth_code(

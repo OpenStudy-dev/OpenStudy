@@ -45,6 +45,11 @@ consent-phishing path via attacker-controlled redirect URIs (see
 
 ### Fixed
 
+- **PDFs open in the viewer again** instead of downloading. `/api/files/raw`
+  now sends `Content-Disposition: inline` for PDF, PNG, JPEG, GIF and WebP;
+  every other type (including HTML and SVG) stays `attachment` so uploaded
+  files can't run script on the site. All file responses also send
+  `X-Content-Type-Options: nosniff`.
 - **Zine sidebar course tags** no longer overflow for codes longer than
   three letters (e.g. `MATHML`, `STOCH`); the tag is wider and the font
   steps down for long codes, up to the 8-character maximum.

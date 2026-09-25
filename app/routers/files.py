@@ -49,6 +49,16 @@ def _sanitize_path(p: str) -> str:
 
 router = APIRouter(prefix="/files", tags=["files"], dependencies=[Depends(require_user)])
 
+# Served with `Content-Disposition: inline` by /raw so the viewer can show
+# them. Deliberately excludes image/svg+xml and text/html (script-capable).
+_INLINE_MIMETYPES = frozenset({
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+})
+
 
 @router.get("/list")
 async def list_files(prefix: str = Query(default=""), limit: int = Query(default=500, le=1000), user: User = Depends(require_user)) -> list[dict[str, Any]]:
@@ -285,12 +295,19 @@ async def raw_file(path: str = Query(...), user: User = Depends(require_user)):
         target = storage_svc._safe_resolve(user.id, path)
     except ValueError as exc:
         raise HTTPException(400, f"invalid path: {exc}") from exc
+    # `inline` lets the viewer's iframe (and "open in new tab") display the
+    # file; `attachment` forces a download. Only types the browser renders
+    # without running script on our origin go inline — HTML, SVG and the
+    # rest stay downloads so an uploaded file can't become stored XSS.
+    disposition = "inline" if meta["mimetype"] in _INLINE_MIMETYPES else "attachment"
     return FileResponse(
         path=str(target),
         media_type=meta["mimetype"],
         filename=target.name,
+        content_disposition_type=disposition,
         headers={
             "Cache-Control": "private, max-age=3600",
+            "X-Content-Type-Options": "nosniff",
         },
     )
 

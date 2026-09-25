@@ -6,7 +6,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAppSettings, useCourses, useDashboard } from "@/lib/queries";
+import { useAppSettings, useActiveCourses, useDashboard } from "@/lib/queries";
 import { prefetchRoute } from "@/lib/prefetch";
 function courseVar(code: string) {
   return `var(--course-${code.toLowerCase()})`;
@@ -94,7 +94,7 @@ function TmLink({
 
 export function TerminalSidebar() {
   const { t } = useTranslation();
-  const courses = useCourses();
+  const courses = useActiveCourses();
   const settings = useAppSettings();
   const dashboard = useDashboard();
 

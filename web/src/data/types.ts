@@ -31,6 +31,8 @@ export type Course = {
   exam_weight?: number;
   exam_retries?: number | null;
   notes?: string | null;
+  /** Finished semester: hidden from the dashboard, sidebar and lists. */
+  archived?: boolean;
 };
 
 export type SlotKind = "lecture" | "exercise" | "tutorial" | "lab";

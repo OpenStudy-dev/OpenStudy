@@ -134,6 +134,9 @@ def register_tools(server: FastMCP) -> None:
         coming up", "how am I doing this week", "summarise my semester",
         "catch me up". Saves 7+ separate `list_*` calls.
 
+        Courses the user archived (finished semesters) are left out, along
+        with their slots, exams, deliverables, tasks, topics and lectures.
+
         When NOT to use: single-entity lookups — use `get_course`,
         `list_tasks`, etc. directly."""
         return _jsonable(await dashboard_intent.get_dashboard_summary(_get_mcp_user_id()))
@@ -157,9 +160,11 @@ def register_tools(server: FastMCP) -> None:
 
     @server.tool()
     async def list_courses() -> list[dict]:
-        """List all courses. Use when you need to discover which course codes
-        exist, or to show the user their course list. If you already know the
-        code, prefer `get_course`."""
+        """List all courses, including archived ones (`archived: true` =
+        a finished semester the user has hidden). Use when you need to
+        discover which course codes exist, or to show the user their course
+        list; leave archived courses out unless the user asks about past
+        semesters. If you already know the code, prefer `get_course`."""
         return _jsonable(await courses_intent.list_courses(_get_mcp_user_id()))
 
     @server.tool()
@@ -243,13 +248,18 @@ def register_tools(server: FastMCP) -> None:
         exam_weight: Optional[int] = None,
         exam_retries: Optional[int] = None,
         notes: Optional[str] = None,
+        archived: Optional[bool] = None,
     ) -> dict:
         """Patch a course's mutable fields. Pass only the fields you want to
         change — omitted fields keep their existing value.
 
         `status_kind` is free-form (common values: 'required', 'elective').
         `color_hex` is e.g. '#7ab8ff'. `code` is immutable — if the user
-        wants a different code, delete and re-create."""
+        wants a different code, delete and re-create.
+
+        `archived=True` hides a finished course (and everything linked to
+        it) from the dashboard without deleting anything; `archived=False`
+        brings it back. Use this, not delete, when a semester ends."""
         patch = CoursePatch(
             full_name=full_name,
             short_name=short_name,
@@ -263,6 +273,7 @@ def register_tools(server: FastMCP) -> None:
             exam_weight=exam_weight,
             exam_retries=exam_retries,
             notes=notes,
+            archived=archived,
         )
         return _jsonable(await courses_intent.update_course(_get_mcp_user_id(), code, patch))
 

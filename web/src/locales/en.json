@@ -112,7 +112,11 @@
     "behindCount_one": "{{count}} behind",
     "behindCount_other": "{{count}} behind",
     "noLecturesPlanned": "no lectures planned",
-    "next": "Next"
+    "next": "Next",
+    "archive": {
+      "toggle": "Archive ({{count}})",
+      "hint": "Finished semesters. Open a course to restore it."
+    }
   },
   "courseDetail": {
     "loadFailed": "Couldn't load course.",
@@ -165,7 +169,12 @@
         "title": "No slots",
         "body": "Add a recurring slot to build out the weekly schedule."
       }
-    }
+    },
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "archivedBadge": "archived",
+    "archivedToast": "{{code}} archived",
+    "unarchivedToast": "{{code}} restored"
   },
   "tasks": {
     "title": "Tasks",

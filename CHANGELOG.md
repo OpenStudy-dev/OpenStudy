@@ -6,6 +6,18 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **Course archive.** Courses from a finished semester can be archived
+  instead of deleted (`archived` flag; migration
+  `20260925000001_courses_archived.sql`). Archived courses and everything
+  linked to them (slots, exams, deliverables, tasks, study topics,
+  lectures) disappear from the dashboard, sidebar, fall-behind warnings,
+  tasks and exams pages. They stay in a collapsible "Archiv" section on the
+  courses page, their detail page has an Archivieren / Wiederherstellen
+  button, and files remain browsable. `GET /api/dashboard?include_archived=true`
+  and the MCP `update_course(archived=…)` parameter expose the same.
+
 ### Security
 
 Hardened RFC 7591 Dynamic Client Registration (`POST /oauth/register`).
@@ -33,6 +45,9 @@ consent-phishing path via attacker-controlled redirect URIs (see
 
 ### Fixed
 
+- **Zine sidebar course tags** no longer overflow for codes longer than
+  three letters (e.g. `MATHML`, `STOCH`); the tag is wider and the font
+  steps down for long codes, up to the 8-character maximum.
 - **"unknown client_id" for Claude Code.** An earlier change in this
   release deleted registered clients that had not completed a login within
   7 days. MCP clients cache their `client_id`, so a deleted row broke them

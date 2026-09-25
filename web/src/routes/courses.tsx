@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Plus, BookOpen } from "lucide-react";
+import { Loader2, Plus, BookOpen, Archive, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/header";
 import { CourseCard } from "@/components/dashboard/course-card";
@@ -7,12 +7,14 @@ import { CourseForm } from "@/components/forms/course-form";
 import { Button } from "@/components/ui/button";
 import { Fab } from "@/components/common/fab";
 import { useDashboard } from "@/lib/queries";
-import type { CourseCode } from "@/data/types";
+import type { Course, CourseCode } from "@/data/types";
+import { cn } from "@/lib/cn";
 
 export default function Courses() {
   const { t } = useTranslation();
-  const { data, isPending, error } = useDashboard();
+  const { data, isPending, error } = useDashboard({ includeArchived: true });
   const [createOpen, setCreateOpen] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
   if (isPending) {
     return (
@@ -45,44 +47,72 @@ export default function Courses() {
     return Math.round((total / list.length) * 100);
   };
 
+  const active = data.courses.filter((c) => !c.archived);
+  const archived = data.courses.filter((c) => c.archived);
+
+  const card = (c: Course) => {
+    const fb = data.fall_behind.find((f) => f.course_code === c.code);
+    return (
+      <CourseCard
+        key={c.code}
+        course={c}
+        progress={progressFor(c.code)}
+        nextLectureAt={fb?.next_lecture_at ? new Date(fb.next_lecture_at) : null}
+        fallBehind={{
+          course_code: c.code as CourseCode,
+          topics: fb?.topics ?? [],
+          last_covered_on: fb?.last_covered_on ? new Date(fb.last_covered_on) : null,
+          next_lecture_at: fb?.next_lecture_at ? new Date(fb.next_lecture_at) : null,
+          severity: fb?.severity ?? "ok",
+        }}
+      />
+    );
+  };
+
   return (
     <>
       <Header
         title={t("courses.title")}
         subtitle={t(
-          data.courses.length === 1 ? "courses.metaModules" : "courses.metaModulesPlural",
-          { count: data.courses.length }
+          active.length === 1 ? "courses.metaModules" : "courses.metaModulesPlural",
+          { count: active.length }
         )}
       />
       <div className="px-4 md:px-8 py-4 md:py-6 max-w-[1000px] mx-auto w-full">
-        {data.courses.length === 0 ? (
+        {active.length === 0 ? (
           <EmptyCourses onCreate={() => setCreateOpen(true)} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {data.courses.map((c) => {
-              const fb = data.fall_behind.find((f) => f.course_code === c.code);
-              return (
-                <CourseCard
-                  key={c.code}
-                  course={c}
-                  progress={progressFor(c.code)}
-                  nextLectureAt={fb?.next_lecture_at ? new Date(fb.next_lecture_at) : null}
-                  fallBehind={{
-                    course_code: c.code as CourseCode,
-                    topics: fb?.topics ?? [],
-                    last_covered_on: fb?.last_covered_on ? new Date(fb.last_covered_on) : null,
-                    next_lecture_at: fb?.next_lecture_at ? new Date(fb.next_lecture_at) : null,
-                    severity: fb?.severity ?? "ok",
-                  }}
-                />
-              );
-            })}
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{active.map(card)}</div>
+        )}
+
+        {archived.length > 0 && (
+          <section className="mt-8">
+            <button
+              type="button"
+              onClick={() => setShowArchive((v) => !v)}
+              aria-expanded={showArchive}
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-fg transition-colors"
+            >
+              <Archive className="h-4 w-4" />
+              {t("courses.archive.toggle", { count: archived.length })}
+              <ChevronDown
+                className={cn("h-4 w-4 transition-transform", showArchive && "rotate-180")}
+              />
+            </button>
+            {showArchive && (
+              <>
+                <p className="text-xs text-muted mt-1">{t("courses.archive.hint")}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 opacity-70">
+                  {archived.map(card)}
+                </div>
+              </>
+            )}
+          </section>
         )}
       </div>
 
       <CourseForm open={createOpen} onOpenChange={setCreateOpen} />
-      {data.courses.length > 0 && (
+      {active.length > 0 && (
         <Fab onClick={() => setCreateOpen(true)} label={t("courses.fab")} />
       )}
     </>

@@ -6,7 +6,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAppSettings, useCourses } from "@/lib/queries";
+import { useAppSettings, useActiveCourses } from "@/lib/queries";
 import { prefetchRoute } from "@/lib/prefetch";
 function cv(code: string) { return `var(--course-${code.toLowerCase()})`; }
 
@@ -89,7 +89,7 @@ function ZLink({
 
 export function ZineSidebar() {
   const { t } = useTranslation();
-  const courses = useCourses();
+  const courses = useActiveCourses();
   const settings = useAppSettings();
 
   const displayName = (settings.data?.display_name ?? "").trim() || "you";
@@ -137,7 +137,7 @@ export function ZineSidebar() {
             className="z-course"
             style={{ "--accent": cv(c.code) } as CSSProperties}
           >
-            <span className="z-tag">{c.code}</span>
+            <span className="z-tag" data-len={Math.min(c.code.length, 8)}>{c.code}</span>
             <div className="z-meta">
               <div className="z-n">{shortName}</div>
               <div className="z-e">

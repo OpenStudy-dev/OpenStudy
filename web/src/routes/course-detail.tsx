@@ -12,6 +12,8 @@ import {
   Check,
   Plus,
   Pencil,
+  Archive,
+  ArchiveRestore,
   RotateCcw,
   MoreHorizontal,
   Trash2,
@@ -84,7 +86,7 @@ export default function CourseDetail() {
   const { t } = useTranslation();
   const { code } = useParams<{ code: string }>();
   const normalized = (code ?? "").toUpperCase() as CourseCode;
-  const { data, isPending, error } = useDashboard();
+  const { data, isPending, error } = useDashboard({ includeArchived: true });
   const [searchParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => {
     const fromUrl = searchParams.get("tab");
@@ -251,22 +253,61 @@ function CourseHeader({
   nextLecture: Date | null;
   exam?: Exam;
 }) {
+  const { t } = useTranslation();
   const c = course.code as CourseCode;
   const [editing, setEditing] = useState(false);
+  const update = useUpdateCourse();
+  const archived = Boolean(course.archived);
+
+  function toggleArchived() {
+    update.mutate(
+      { code: course.code, patch: { archived: !archived } },
+      {
+        onSuccess: () =>
+          toast.success(
+            t(archived ? "courseDetail.unarchivedToast" : "courseDetail.archivedToast", {
+              code: course.code,
+            })
+          ),
+        onError: () => toast.error(t("common.failed")),
+      }
+    );
+  }
+
+  const actionClass =
+    "inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-fg px-2 py-1 rounded-md hover:bg-surface-2 transition-colors disabled:opacity-50";
 
   return (
     <section className="card overflow-hidden relative">
       <CourseAccentBar code={c} />
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        aria-label="Edit course"
-        className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-fg px-2 py-1 rounded-md hover:bg-surface-2 transition-colors"
-      >
-        <Pencil className="h-3.5 w-3.5" /> Edit
-      </button>
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={toggleArchived}
+          disabled={update.isPending}
+          className={actionClass}
+        >
+          {archived ? (
+            <>
+              <ArchiveRestore className="h-3.5 w-3.5" /> {t("courseDetail.unarchive")}
+            </>
+          ) : (
+            <>
+              <Archive className="h-3.5 w-3.5" /> {t("courseDetail.archive")}
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label="Edit course"
+          className={actionClass}
+        >
+          <Pencil className="h-3.5 w-3.5" /> Edit
+        </button>
+      </div>
       <div className="p-4 md:p-6 flex flex-col gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-3 pr-16">
+        <div className="flex flex-wrap items-start justify-between gap-3 pr-48">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs text-muted font-mono">
               <span>{course.module_code}</span>
@@ -274,6 +315,12 @@ function CourseHeader({
               <span>{course.ects} LP</span>
               <span>·</span>
               <span>{course.status_kind}</span>
+              {archived && (
+                <>
+                  <span>·</span>
+                  <span className="uppercase tracking-wide">{t("courseDetail.archivedBadge")}</span>
+                </>
+              )}
             </div>
             <h2 className="text-xl md:text-2xl font-semibold mt-1">{course.full_name}</h2>
             <p className="text-sm text-muted mt-1">

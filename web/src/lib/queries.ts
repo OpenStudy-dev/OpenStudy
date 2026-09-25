@@ -117,10 +117,15 @@ export function useTotpDisable() {
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
-export function useDashboard() {
+/** Archived courses (and everything linked to them) are left out unless
+ * `includeArchived` is set — the courses page and course detail need them. */
+export function useDashboard({ includeArchived = false }: { includeArchived?: boolean } = {}) {
   return useQuery({
-    queryKey: qk.dashboard,
-    queryFn: () => api.get<DashboardSummary>("/api/dashboard"),
+    queryKey: includeArchived ? [...qk.dashboard, "all"] : qk.dashboard,
+    queryFn: () =>
+      api.get<DashboardSummary>(
+        includeArchived ? "/api/dashboard?include_archived=true" : "/api/dashboard"
+      ),
     refetchOnWindowFocus: true,
   });
 }
@@ -132,6 +137,20 @@ export function useCourses() {
     queryFn: () => api.get<Course[]>("/api/courses"),
     staleTime: 5 * 60_000,
   });
+}
+
+/** Courses of the current semester — archived ones filtered out. */
+export function useActiveCourses() {
+  return useQuery({
+    queryKey: qk.courses,
+    queryFn: () => api.get<Course[]>("/api/courses"),
+    staleTime: 5 * 60_000,
+    select: (courses) => courses.filter((c) => !c.archived),
+  });
+}
+
+export function archivedCodes(courses: Course[] | undefined): Set<string> {
+  return new Set((courses ?? []).filter((c) => c.archived).map((c) => c.code));
 }
 
 export function useCourse(code: string) {

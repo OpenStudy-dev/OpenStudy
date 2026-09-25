@@ -112,7 +112,11 @@
     "behindCount_one": "{{count}} im Rückstand",
     "behindCount_other": "{{count}} im Rückstand",
     "noLecturesPlanned": "keine Vorlesungen geplant",
-    "next": "Nächste"
+    "next": "Nächste",
+    "archive": {
+      "toggle": "Archiv ({{count}})",
+      "hint": "Abgeschlossene Semester. Zum Wiederherstellen einen Kurs öffnen."
+    }
   },
   "courseDetail": {
     "loadFailed": "Kurs konnte nicht geladen werden.",
@@ -165,7 +169,12 @@
         "title": "Keine Slots",
         "body": "Lege einen wiederkehrenden Slot an, um den Wochenplan aufzubauen."
       }
-    }
+    },
+    "archive": "Archivieren",
+    "unarchive": "Wiederherstellen",
+    "archivedBadge": "archiviert",
+    "archivedToast": "{{code}} archiviert",
+    "unarchivedToast": "{{code}} wiederhergestellt"
   },
   "tasks": {
     "title": "Aufgaben",

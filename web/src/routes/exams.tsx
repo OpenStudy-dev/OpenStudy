@@ -6,12 +6,12 @@ import { CourseAccentBar } from "@/components/common/course-accent";
 import { StatusChip } from "@/components/common/status-chip";
 import { CountdownChip } from "@/components/common/countdown-chip";
 import { EmptyState } from "@/components/common/empty-state";
-import { useCourses, useExams } from "@/lib/queries";
+import { useActiveCourses, useExams } from "@/lib/queries";
 import { fmtDateTime } from "@/lib/time";
 
 export default function Exams() {
   const { t } = useTranslation();
-  const courses = useCourses();
+  const courses = useActiveCourses();
   const exams = useExams();
 
   if (courses.isPending || exams.isPending) {

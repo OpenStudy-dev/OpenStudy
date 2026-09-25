@@ -13,6 +13,7 @@ import { Fab } from "@/components/common/fab";
 import { DeliverableForm } from "@/components/forms/deliverable-form";
 import { TaskForm } from "@/components/forms/task-form";
 import {
+  archivedCodes,
   useCourses,
   useDeliverables,
   useMarkDeliverableSubmitted,
@@ -29,9 +30,20 @@ export default function Tasks({ initialTab = "tasks" }: { initialTab?: Tab }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>(initialTab);
-  const tasks = useTasks();
-  const deliverables = useDeliverables();
+  const allTasks = useTasks();
+  const allDeliverables = useDeliverables();
   const courses = useCourses();
+  // Finished-semester courses are archived: hide their leftovers here too.
+  const hidden = archivedCodes(courses.data);
+  const activeCourses = (courses.data ?? []).filter((c) => !c.archived);
+  const tasks = {
+    ...allTasks,
+    data: allTasks.data?.filter((x) => !x.course_code || !hidden.has(x.course_code)),
+  };
+  const deliverables = {
+    ...allDeliverables,
+    data: allDeliverables.data?.filter((x) => !hidden.has(x.course_code)),
+  };
   const [creatingTask, setCreatingTask] = useState(false);
   const [creatingDel, setCreatingDel] = useState(false);
 
@@ -80,7 +92,7 @@ export default function Tasks({ initialTab = "tasks" }: { initialTab?: Tab }) {
             hasData={Boolean(tasks.data)}
           >
             {tasks.data && (
-              <TaskInbox tasks={tasks.data} courses={courses.data ?? []} />
+              <TaskInbox tasks={tasks.data} courses={activeCourses} />
             )}
           </TasksPanel>
         ) : (
@@ -92,7 +104,7 @@ export default function Tasks({ initialTab = "tasks" }: { initialTab?: Tab }) {
             {deliverables.data && (
               <DeliverablesContent
                 items={deliverables.data}
-                coursesCount={courses.data?.length ?? 0}
+                coursesCount={activeCourses.length}
               />
             )}
           </DeliverablesPanel>
@@ -102,12 +114,12 @@ export default function Tasks({ initialTab = "tasks" }: { initialTab?: Tab }) {
       <TaskForm
         open={creatingTask}
         onOpenChange={setCreatingTask}
-        courses={courses.data ?? []}
+        courses={activeCourses}
       />
       <DeliverableForm
         open={creatingDel}
         onOpenChange={setCreatingDel}
-        courses={courses.data ?? []}
+        courses={activeCourses}
       />
       <Fab
         onClick={() => (tab === "tasks" ? setCreatingTask(true) : setCreatingDel(true))}

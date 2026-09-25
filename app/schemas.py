@@ -155,6 +155,7 @@ class CoursePatch(BaseModel):
     exam_weight: Optional[int] = None
     exam_retries: Optional[int] = None
     notes: Optional[str] = None
+    archived: Optional[bool] = None
 
 
 class Course(BaseModel):
@@ -172,6 +173,7 @@ class Course(BaseModel):
     exam_weight: int = 100
     exam_retries: Optional[int] = None
     notes: Optional[str] = None
+    archived: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

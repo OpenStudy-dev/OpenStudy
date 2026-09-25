@@ -9,7 +9,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAppSettings, useCourses, useDashboard } from "@/lib/queries";
+import { useAppSettings, useActiveCourses, useDashboard } from "@/lib/queries";
 import { courseAccentVar } from "@/lib/theme";
 import { cn } from "@/lib/cn";
 import type { CourseCode } from "@/data/types";
@@ -51,7 +51,7 @@ const mobileOrder = ["/app", "/app/courses", "/app/tasks", "/app/files", "/app/e
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const courses = useCourses();
+  const courses = useActiveCourses();
   const dashboard = useDashboard();
   const settings = useAppSettings();
 

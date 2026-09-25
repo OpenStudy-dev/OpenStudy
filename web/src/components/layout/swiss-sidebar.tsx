@@ -6,7 +6,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAppSettings, useCourses } from "@/lib/queries";
+import { useAppSettings, useActiveCourses } from "@/lib/queries";
 import { prefetchRoute } from "@/lib/prefetch";
 function cv(code: string) { return `var(--course-${code.toLowerCase()})`; }
 function pad(n: number) { return String(n).padStart(2, "0"); }
@@ -40,7 +40,7 @@ function SLink({
 
 export function SwissSidebar() {
   const { t } = useTranslation();
-  const courses = useCourses();
+  const courses = useActiveCourses();
   const settings = useAppSettings();
 
   const displayName = (settings.data?.display_name ?? "").trim() || "Student";

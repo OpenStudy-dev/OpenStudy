@@ -207,7 +207,7 @@ html[data-theme="zine"] ::selection { background: var(--z-yellow); color: var(--
 
 [data-theme="zine"] .z-course {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   align-items: center; gap: 8px;
   padding: 8px 8px 8px 6px;
   min-width: 0;
@@ -228,13 +228,23 @@ html[data-theme="zine"] ::selection { background: var(--z-yellow); color: var(--
 [data-theme="zine"] .z-course .z-tag {
   background: var(--accent);
   border: 2px solid var(--z-ink);
-  padding: 3px 0;
+  padding: 3px 2px;
   text-align: center;
   font-size: 10px; font-weight: 900;
+  line-height: 13px;
   letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
   transform: rotate(-4deg);
   color: var(--z-ink);
 }
+/* Codes are 1–8 chars; step the size down so longer ones stay inside the
+   fixed-width tag (keeps the course names aligned down the list). */
+[data-theme="zine"] .z-course .z-tag[data-len="4"] { font-size: 9.5px; letter-spacing: 0.04em; }
+[data-theme="zine"] .z-course .z-tag[data-len="5"] { font-size: 8.5px; letter-spacing: 0.03em; }
+[data-theme="zine"] .z-course .z-tag[data-len="6"] { font-size: 7.5px; letter-spacing: 0.02em; }
+[data-theme="zine"] .z-course .z-tag[data-len="7"],
+[data-theme="zine"] .z-course .z-tag[data-len="8"] { font-size: 6.5px; letter-spacing: 0; }
 [data-theme="zine"] .z-course .z-meta { min-width: 0; overflow: hidden; }
 [data-theme="zine"] .z-course .z-meta .z-n {
   font-size: 12px; font-weight: 700;

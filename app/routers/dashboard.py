@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from ..auth import require_user, User
 from ..schemas import DashboardSummary
@@ -8,5 +8,8 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("", response_model=DashboardSummary)
-async def dashboard(user: User = Depends(require_user)) -> DashboardSummary:
-    return await intent.get_dashboard_summary(user.id)
+async def dashboard(
+    include_archived: bool = Query(False),
+    user: User = Depends(require_user),
+) -> DashboardSummary:
+    return await intent.get_dashboard_summary(user.id, include_archived=include_archived)

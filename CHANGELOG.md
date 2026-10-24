@@ -34,6 +34,10 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   only the five capabilities its entrypoint needs). The frontend Caddy runs
   as a non-root user on :8080 with its admin API off; the host still maps
   `127.0.0.1:8080`, so reverse-proxy / tunnel config is unchanged.
+- **Security headers.** HSTS, `nosniff`, Referrer-Policy and
+  Permissions-Policy on every response; a Content-Security-Policy for the
+  app; the OAuth consent page can never be framed (`frame-ancestors
+  'none'`, `X-Frame-Options: DENY`) so Approve can't be clickjacked.
 
 ### Added
 

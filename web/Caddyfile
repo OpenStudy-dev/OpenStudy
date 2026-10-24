@@ -34,6 +34,45 @@
 	# marginal gain over zstd.
 	encode zstd gzip
 
+	# Security headers on every response, static and proxied. `defer`
+	# applies them when the response is written, so a backend header can't
+	# silently override them.
+	header {
+		defer
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+		-Server
+	}
+
+	# Framing + CSP.
+	# - The OAuth consent page must never be framed: a hidden frame could
+	#   trick the user into clicking Approve (clickjacking).
+	# - The SPA frames its own /api/files/raw for the PDF viewer, so it
+	#   allows same-origin framing.
+	# - /api/files/raw gets no CSP: a CSP on the PDF response itself breaks
+	#   Chrome's built-in viewer.
+	# - No form-action: the consent form ends in a redirect to the client's
+	#   registered callback (claude.ai, localhost), which it would block.
+	@oauth path /oauth/*
+	header @oauth {
+		defer
+		X-Frame-Options "DENY"
+		Content-Security-Policy "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; object-src 'none'; base-uri 'none'"
+	}
+	@app not path /oauth/* /api/files/raw
+	header @app {
+		defer
+		X-Frame-Options "SAMEORIGIN"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api.github.com; frame-src 'self'; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+	}
+	@raw path /api/files/raw
+	header @raw {
+		defer
+		X-Frame-Options "SAMEORIGIN"
+	}
+
 	# Some MCP clients (Claude.ai's connector being the painful one) POST
 	# to /mcp without the trailing slash, drop the Authorization header
 	# when following the 307 redirect FastAPI emits to /mcp/, and then

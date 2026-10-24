@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ExternalLink, Loader2, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";

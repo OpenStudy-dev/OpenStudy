@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { KeyRound, Loader2 } from "lucide-react";
 import { useResetPassword } from "@/lib/queries";
 import { Wordmark } from "@/components/brand/wordmark";

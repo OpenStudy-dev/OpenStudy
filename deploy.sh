@@ -144,7 +144,9 @@ fi
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
     log "building openstudy + frontend images..."
-    if ! $COMPOSE build 2>&1 | tee -a "$LOG"; then
+    # --pull: always resolve the pinned base-image digests from the registry
+    # instead of trusting whatever happens to be cached locally.
+    if ! $COMPOSE build --pull 2>&1 | tee -a "$LOG"; then
         err "build failed — aborting before any container changes"
         exit 1
     fi
@@ -155,6 +157,16 @@ fi
 # ── ensure postgres is up before migrating ───────────────────────────────────
 
 log "ensuring postgres is up..."
+# `up -d` recreates postgres whenever its pinned image changes. That is what
+# we want for minor releases (16.13 -> 16.15: same on-disk format) and
+# exactly what we must NOT do across majors, so compare before touching it.
+want_pg=$($COMPOSE config --images 2>/dev/null | grep -E '^(docker\.io/(library/)?)?postgres:' | head -1)
+want_major=$(printf '%s' "$want_pg" | sed -E 's#^.*postgres:([0-9]+).*#\1#')
+have_major=$(docker exec openstudy-postgres sh -c 'echo "$PG_MAJOR"' 2>/dev/null || true)
+if [ -n "$have_major" ] && [ -n "$want_major" ] && [ "$have_major" != "$want_major" ]; then
+    err "postgres major change ($have_major -> $want_major) — needs a data migration, refusing to swap the container"
+    exit 1
+fi
 $COMPOSE up -d postgres
 # wait for healthy
 for _ in $(seq 1 30); do

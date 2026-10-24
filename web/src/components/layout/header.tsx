@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { Settings } from "lucide-react";
 import { fmtBerlin, now } from "@/lib/time";
 import { cn } from "@/lib/cn";

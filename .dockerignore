@@ -3,8 +3,8 @@
 # excluded here disappears from both builds.
 
 # Python build / tooling artefacts
-__pycache__/
-*.py[cod]
+**/__pycache__/
+**/*.py[cod]
 *$py.class
 .venv/
 venv/
@@ -13,7 +13,7 @@ venv/
 .ruff_cache/
 
 # Frontend artefacts that the build itself produces
-node_modules/
+**/node_modules/
 web/dist/
 web/.vite/
 

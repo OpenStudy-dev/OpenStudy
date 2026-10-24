@@ -1,6 +1,10 @@
 # OpenStudy FastAPI backend
 # Built by ./deploy.sh, run via docker-compose alongside postgres.
-FROM python:3.12-slim AS base
+#
+# Every external image is pinned to an exact version AND digest: the digest
+# is what Docker actually pulls, the tag documents it. Bump both together
+# (`docker buildx imagetools inspect <image>:<tag>`).
+FROM python:3.12.15-slim-trixie@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704 AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -15,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv (Astral) for fast dependency resolution.
-COPY --from=ghcr.io/astral-sh/uv:0.8.0 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a /uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -30,6 +34,14 @@ COPY migrations ./migrations
 
 # Final install (in case pyproject changed locally).
 RUN uv sync --frozen --no-dev
+
+# Run as an unprivileged user. uid 1000 matches the owner of STUDY_ROOT
+# (/opt/courses) on the host, which n8n's Moodle sync also writes as.
+# The venv and source stay root-owned and read-only to the app.
+RUN groupadd --system --gid 1000 app \
+    && useradd --system --uid 1000 --gid app --home-dir /nonexistent --no-create-home app
+ENV UV_NO_CACHE=1
+USER app
 
 EXPOSE 8000
 

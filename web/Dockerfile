@@ -4,11 +4,14 @@
 # to the openstudy backend container on the internal docker network.
 
 # ─── Stage 1: build ────────────────────────────────────────────────────────
-FROM node:20-alpine AS build
+# Pinned to version + digest (see the backend Dockerfile). Node 24.22.1
+# carries the fix for CVE-2026-111497 (Node2Shell).
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS build
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Same pnpm as package.json#packageManager — never `latest`.
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 WORKDIR /repo
 
@@ -38,7 +41,7 @@ COPY scripts ./scripts
 RUN cd web && pnpm build
 
 # ─── Stage 2: serve ────────────────────────────────────────────────────────
-FROM caddy:2-alpine
+FROM caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
 
 # Static SPA bundle.
 COPY --from=build /repo/web/dist /srv

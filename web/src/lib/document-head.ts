@@ -5,7 +5,7 @@
  * - useHtmlLang():      mirror i18n.language onto <html lang="…">.
  */
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 
 const SITE_NAME = import.meta.env.VITE_SITE_NAME ?? "OpenStudy";

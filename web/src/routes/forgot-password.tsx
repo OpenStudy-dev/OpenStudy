@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Loader2, Mail } from "lucide-react";
 import { useForgotPassword } from "@/lib/queries";
 import { Wordmark } from "@/components/brand/wordmark";

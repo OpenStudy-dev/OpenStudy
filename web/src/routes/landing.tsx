@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { Wordmark } from "@/components/brand/wordmark";
 import { useSession } from "@/lib/queries";
 import { useDocumentTitle, useHtmlLang } from "@/lib/document-head";

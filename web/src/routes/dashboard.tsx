@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import type { CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Greeting } from "@/components/dashboard/greeting";
 import { FallBehindBanner } from "@/components/dashboard/fall-behind-banner";
 import { MetricTile } from "@/components/dashboard/metric-tile";

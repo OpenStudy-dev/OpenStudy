@@ -6,6 +6,30 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Security — dependency + supply-chain sweep (2026-10-24)
+
+- **Backend: 87 → 0 known advisories.** Lockfile fully refreshed under an
+  advanced cooldown (`exclude-newer` 2026-10-17, plus a documented
+  `certifi` exception for GHSA-6q48-6c7w-9gw2). Notable: starlette 1.8,
+  python-multipart 0.0.32, cryptography 50, mcp 1.30 (kept on 1.x —
+  2.x drops `mcp.server.fastmcp`), pyjwt 2.15. Unused `pillow` removed.
+- **Frontend: 44 → 0 known advisories.** React Router 6 → 7.18
+  (`react-router-dom` replaced by `react-router`); in-range updates;
+  `postcss-selector-parser` overridden to 7.x (CSS output byte-identical).
+- **Login open redirect fixed.** `?next=` is now restricted to same-origin
+  paths (`safeNext`), closing the `//host` and `/\host` variants.
+- **Everything pinned.** Base images by exact version + digest (Python
+  3.12.15, Node 24.22.1 — fixes CVE-2026-111497 — Caddy 2.11.7, Postgres
+  16.15, uv 0.11.7); pnpm pinned instead of `latest`; every GitHub Action
+  pinned to a commit SHA; CI tool versions exact; ruff rule set pinned.
+- **Backend container runs as uid 1000**, not root, with read-only code.
+- **`deploy.sh`** builds with `--pull` and refuses a Postgres major-version
+  change instead of swapping the container onto an incompatible data dir.
+- **CI deploy key** can be bound to `scripts/ci-deploy-forced-command.sh`,
+  which deploys only a validated, existing ref and ignores everything else.
+- **`.dockerignore`** patterns now match nested `node_modules/` and
+  `__pycache__/` (they only matched the repo root before).
+
 ### Added
 
 - **Course archive.** Courses from a finished semester can be archived

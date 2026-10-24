@@ -15,9 +15,8 @@ dependencies = [
   "httpx>=0.28",
   "python-dateutil>=2.9",
   "tzdata>=2024.2",
-  "mcp>=1.2",
+  "mcp>=1.30,<2",  # 2.x drops mcp.server.fastmcp; 1.30 fixes GHSA-84m7-p3x7-pcfv et al.
   "pymupdf>=1.24",
-  "pillow>=10.4",
   "pyotp>=2.9",
   "psycopg[binary,pool]>=3.2",
   "cryptography>=42",
@@ -28,8 +27,12 @@ dependencies = [
 package = false
 # Supply-chain cooldown: pinned date instead of rolling "N days" so security
 # pins set today don't conflict with the cooldown window. Bump this when
-# adopting new packages.
-exclude-newer = "2026-05-16T12:00:00Z"
+# adopting new packages. Advanced 2026-10-24 (/depend): today minus 7 days.
+exclude-newer = "2026-10-17T00:00:00Z"
+# Per-package exceptions — each needs the advisory it exists for.
+# certifi 2026.10.19 removes the compromised emSign ECC Root CA - G3
+# (GHSA-6q48-6c7w-9gw2); released inside the 7-day window.
+exclude-newer-package = { certifi = "2026-10-21T00:00:00Z" }
 
 [dependency-groups]
 dev = [
@@ -52,6 +55,11 @@ testpaths = ["tests"]
 line-length = 100
 target-version = "py312"
 extend-exclude = ["scripts/_deprecated", "migrations/_archive"]
+
+[tool.ruff.lint]
+# Pinned explicitly: ruff 0.17 widened its defaults; CI enforces exactly
+# the rule set the codebase was written against.
+select = ["E4", "E7", "E9", "F"]
 
 [tool.ruff.lint.per-file-ignores]
 # main.py imports the routers + mcp_http AFTER setting the httpx log level —

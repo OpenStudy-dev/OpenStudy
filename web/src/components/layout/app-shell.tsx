@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { Sidebar, BottomNav } from "./sidebar";
 import { TerminalSidebar } from "./terminal-sidebar";

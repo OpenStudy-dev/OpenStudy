@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { QueryProvider } from "@/components/layout/query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Landing from "@/routes/landing";

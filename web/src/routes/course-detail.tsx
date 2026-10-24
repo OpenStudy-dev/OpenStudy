@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link, Navigate, useSearchParams } from "react-router-dom";
+import { useParams, Link, Navigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,

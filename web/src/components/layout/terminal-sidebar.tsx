@@ -4,7 +4,7 @@
  * Mirrors real data: courses, settings, dashboard counters.
  */
 import type { CSSProperties, ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAppSettings, useActiveCourses, useDashboard } from "@/lib/queries";
 import { prefetchRoute } from "@/lib/prefetch";

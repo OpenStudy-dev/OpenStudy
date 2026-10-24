@@ -4,7 +4,7 @@
  * branding and the fake status footer.
  */
 import type { CSSProperties, ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAppSettings, useActiveCourses } from "@/lib/queries";
 import { prefetchRoute } from "@/lib/prefetch";

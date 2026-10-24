@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router";
 import { KeyRound, Loader2, Mail, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLogin, useSession } from "@/lib/queries";
 import { ApiError } from "@/lib/api";
 import { Wordmark } from "@/components/brand/wordmark";
 import { useDocumentTitle, useHtmlLang } from "@/lib/document-head";
+import { safeNext } from "@/lib/safe-next";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -22,7 +23,8 @@ export default function Login() {
   const [needsTotp, setNeedsTotp] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const next = new URLSearchParams(location.search).get("next") ?? "/app";
+  // Only same-origin paths — `next` is attacker-controllable via the URL.
+  const next = safeNext(new URLSearchParams(location.search).get("next"), window.location.origin);
 
   if (session.data?.authed) {
     return <Navigate to={next} replace />;

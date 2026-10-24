@@ -15,7 +15,7 @@ import {
   User,
 } from "lucide-react";
 import { TotpCard } from "@/components/settings/totp-card";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/header";

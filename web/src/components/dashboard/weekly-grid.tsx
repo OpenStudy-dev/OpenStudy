@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { Slot, CourseCode } from "@/data/types";
 import { courseAccentVar } from "@/lib/theme";

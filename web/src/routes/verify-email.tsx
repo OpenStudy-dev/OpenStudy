@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { Loader2 } from "lucide-react";
 import { useVerifyEmail } from "@/lib/queries";
 import { Wordmark } from "@/components/brand/wordmark";

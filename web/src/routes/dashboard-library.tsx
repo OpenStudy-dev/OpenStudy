@@ -6,7 +6,7 @@
  * numerals, double rules.
  */
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { useTranslation } from "react-i18next";
 import {

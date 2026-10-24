@@ -43,6 +43,12 @@ RUN cd web && pnpm build
 # ─── Stage 2: serve ────────────────────────────────────────────────────────
 FROM caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
 
+# The 2026-10-21 caddy image still ships brotli-libs 1.2.0 (needed by
+# libcurl). Caddy itself is a static Go binary and doesn't link it, but
+# take the CVE-2026-111497 (Node2Shell) fix anyway. Drop this line once the
+# pinned base digest carries brotli-libs >= 1.2.1.
+RUN apk add --no-cache --upgrade 'brotli-libs>=1.2.1'
+
 # Static SPA bundle.
 COPY --from=build /repo/web/dist /srv
 

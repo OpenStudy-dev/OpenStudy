@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router";
 import { Wordmark } from "@/components/brand/wordmark";
 import { useSession } from "@/lib/queries";
+import { LANDING_ONLY } from "@/lib/build-flags";
 import { useDocumentTitle, useHtmlLang } from "@/lib/document-head";
 import "@/styles/landing.css";
 
@@ -145,7 +146,8 @@ export default function Landing() {
   useDocumentTitle();
   useHtmlLang();
 
-  const session = useSession();
+  // The static landing build has no backend to ask.
+  const session = useSession({ enabled: !LANDING_ONLY });
   const [stars, setStars] = useState<number | null>(null);
   const [navHidden, setNavHidden] = useState(false);
 

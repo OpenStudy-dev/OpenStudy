@@ -16,6 +16,7 @@
     "dev": "node ../scripts/build-seo.mjs && vite",
     "prebuild": "node ../scripts/build-seo.mjs",
     "build": "tsc -b && vite build",
+    "build:landing": "node ../scripts/build-landing.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

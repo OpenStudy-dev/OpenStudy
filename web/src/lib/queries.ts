@@ -57,12 +57,13 @@ function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
 // ── Session ─────────────────────────────────────────────────────────────────
 export type SessionInfo = { authed: boolean; totp_enabled: boolean };
 
-export function useSession() {
+export function useSession({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: qk.session,
     queryFn: () => api.get<SessionInfo>("/api/auth/session"),
     refetchOnWindowFocus: true,
     staleTime: 60_000,
+    enabled,
   });
 }
 

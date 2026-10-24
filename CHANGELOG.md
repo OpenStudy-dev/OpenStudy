@@ -6,6 +6,18 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added — static landing-only build
+
+- **`pnpm build:landing`** (`scripts/build-landing.mjs`) builds just the
+  marketing page into `web/dist-landing/`: `VITE_LANDING_ONLY` routes only
+  `/` and `/de` (everything else goes home), the session check is skipped so
+  nothing calls an API, and the app bundle is tree-shaken out entirely (1 JS
+  chunk). openstudy.dev is now served this way from Cloudflare Workers
+  Static Assets (`web/deploy/cloudflare/wrangler.jsonc` + `_headers`).
+  Self-hosted builds are unchanged.
+- `/de` now resolves in the normal app too (it was advertised in the
+  sitemap/hreflang but had no route).
+
 ### Security — dependency + supply-chain sweep (2026-10-24)
 
 - **Backend: 87 → 0 known advisories.** Lockfile fully refreshed under an

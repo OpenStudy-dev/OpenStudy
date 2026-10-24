@@ -1,0 +1,21 @@
+// Static openstudy.dev landing page on Cloudflare Workers Static Assets.
+// Assets-only: there is no Worker script, so nothing runs server-side.
+//
+//   cd web && pnpm build:landing
+//   pnpm dlx wrangler@4.151.1 deploy -c deploy/cloudflare/wrangler.jsonc
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "openstudy",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../../dist-landing",
+    "not_found_handling": "single-page-application",
+    // Serve /de (not /de/), matching the sitemap's canonical URLs.
+    "html_handling": "drop-trailing-slash"
+  },
+  // Custom domain: Cloudflare creates and manages the DNS record itself.
+  "routes": [{ "pattern": "openstudy.dev", "custom_domain": true }],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": false }
+}

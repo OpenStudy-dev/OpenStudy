@@ -29,6 +29,11 @@ versions follow [SemVer](https://semver.org/spec/v2.0.0.html).
   which deploys only a validated, existing ref and ignores everything else.
 - **`.dockerignore`** patterns now match nested `node_modules/` and
   `__pycache__/` (they only matched the repo root before).
+- **Least-privilege containers.** All three services run with a read-only
+  root filesystem, `no-new-privileges` and `cap_drop: [ALL]` (Postgres keeps
+  only the five capabilities its entrypoint needs). The frontend Caddy runs
+  as a non-root user on :8080 with its admin API off; the host still maps
+  `127.0.0.1:8080`, so reverse-proxy / tunnel config is unchanged.
 
 ### Added
 

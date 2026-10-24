@@ -1,87 +1,92 @@
 # Internal Caddy config for the frontend container.
 #
-# Listens HTTP-only on :80; the host's outer reverse proxy (Caddy / nginx /
-# Traefik / whatever) handles TLS termination and forwards to this port.
+# Listens HTTP-only on :8080 — an unprivileged port, so the container runs
+# as a non-root user with no capabilities. The host's outer reverse proxy
+# (Caddy / nginx / Traefik / Cloudflare Tunnel) handles TLS termination and
+# forwards to this port.
 #
 # Two responsibilities:
 #   1. Reverse-proxy backend routes to the openstudy container on the
 #      internal docker network.
 #   2. Serve the built Vite SPA from /srv with `try_files /index.html` so
 #      client-side routing works on hard-refresh.
-
 {
-    # Trust X-Forwarded-* headers from upstream proxies on private networks
-    # (the host's TLS terminator forwards in over the docker bridge).
-    # Without this, every request to the backend appears to come from the
-    # bridge gateway IP and the rate limiter buckets all traffic together.
-    servers {
-        trusted_proxies static private_ranges
-    }
+	# The config is baked into the image and never reloaded at runtime, so
+	# the admin API is pure attack surface.
+	admin off
+
+	# Trust X-Forwarded-* headers from upstream proxies on private networks
+	# (the host's TLS terminator forwards in over the docker bridge).
+	# Without this, every request to the backend appears to come from the
+	# bridge gateway IP and the rate limiter buckets all traffic together.
+	servers {
+		trusted_proxies static private_ranges
+	}
 }
 
-:80 {
-    # Compression preference order: zstd → gzip. The official caddy:2-alpine
-    # image doesn't ship with the brotli plugin, so `br` is omitted here —
-    # zstd already beats brotli on most text payloads when the client supports
-    # it (modern browsers do), and gzip is the universal fallback. To add
-    # brotli you'd need a custom caddy image with `xcaddy build … --with
-    # github.com/dunglas/caddy-cbrotli` — not worth the extra layer for the
-    # marginal gain over zstd.
-    encode zstd gzip
+:8080 {
+	# Compression preference order: zstd → gzip. The official caddy:2-alpine
+	# image doesn't ship with the brotli plugin, so `br` is omitted here —
+	# zstd already beats brotli on most text payloads when the client supports
+	# it (modern browsers do), and gzip is the universal fallback. To add
+	# brotli you'd need a custom caddy image with `xcaddy build … --with
+	# github.com/dunglas/caddy-cbrotli` — not worth the extra layer for the
+	# marginal gain over zstd.
+	encode zstd gzip
 
-    # Some MCP clients (Claude.ai's connector being the painful one) POST
-    # to /mcp without the trailing slash, drop the Authorization header
-    # when following the 307 redirect FastAPI emits to /mcp/, and then
-    # report "Authorization with the MCP server failed". Rewrite at the
-    # proxy layer so no HTTP redirect happens and the bearer stays attached.
-    @mcp_bare {
-        path /mcp
-    }
-    handle @mcp_bare {
-        rewrite * /mcp/
-        reverse_proxy openstudy:8000 {
-            flush_interval -1
-        }
-    }
+	# Some MCP clients (Claude.ai's connector being the painful one) POST
+	# to /mcp without the trailing slash, drop the Authorization header
+	# when following the 307 redirect FastAPI emits to /mcp/, and then
+	# report "Authorization with the MCP server failed". Rewrite at the
+	# proxy layer so no HTTP redirect happens and the bearer stays attached.
+	@mcp_bare {
+		path /mcp
+	}
+	handle @mcp_bare {
+		rewrite * /mcp/
+		reverse_proxy openstudy:8000 {
+			flush_interval -1
+		}
+	}
 
-    # Backend API + OAuth + remaining MCP paths. flush_interval -1 keeps
-    # Streamable-HTTP MCP responses from being buffered.
-    @api {
-        path /api/* /oauth/* /mcp/* /session
-        path /.well-known/oauth-*
-    }
-    handle @api {
-        reverse_proxy openstudy:8000 {
-            flush_interval -1
-        }
-    }
+	# Backend API + OAuth + remaining MCP paths. flush_interval -1 keeps
+	# Streamable-HTTP MCP responses from being buffered.
+	@api {
+		path /api/* /oauth/* /mcp/* /session
+		path /.well-known/oauth-*
+	}
+	handle @api {
+		reverse_proxy openstudy:8000 {
+			flush_interval -1
+		}
+	}
 
-    # /login and /logout are special: POST goes to the backend (form
-    # submit + cookie set), GET is a SPA route the browser navigates to.
-    @auth_post {
-        method POST
-        path /login /logout
-    }
-    handle @auth_post {
-        reverse_proxy openstudy:8000
-    }
+	# /login and /logout are special: POST goes to the backend (form
+	# submit + cookie set), GET is a SPA route the browser navigates to.
+	@auth_post {
+		method POST
+		path /login /logout
+	}
+	handle @auth_post {
+		reverse_proxy openstudy:8000
+	}
 
-    # SPA fallback for everything else.
-    handle {
-        root * /srv
-        try_files {path} /index.html
-        file_server
+	# SPA fallback for everything else.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
 
-        # Hashed bundles never change → cache forever.
-        header /assets/* Cache-Control "public, max-age=31536000, immutable"
+		# Hashed bundles never change → cache forever.
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
 
-        # index.html and other non-asset responses must revalidate so the
-        # browser picks up the current build's asset references after a
-        # deploy. Without this, a cached index.html can pin users to old
-        # asset hashes for hours and silently mask shipped fixes.
-        @non_asset {
-            not path /assets/*
-        }
-        header @non_asset Cache-Control "no-cache, must-revalidate"
-    }
+		# index.html and other non-asset responses must revalidate so the
+		# browser picks up the current build's asset references after a
+		# deploy. Without this, a cached index.html can pin users to old
+		# asset hashes for hours and silently mask shipped fixes.
+		@non_asset {
+			not path /assets/*
+		}
+		header @non_asset Cache-Control "no-cache, must-revalidate"
+	}
 }

@@ -55,4 +55,11 @@ COPY --from=build /repo/web/dist /srv
 # Internal Caddyfile: serves the SPA, proxies API/MCP/OAuth to the backend.
 COPY web/Caddyfile /etc/caddy/Caddyfile
 
-EXPOSE 80
+# Unprivileged runtime user; Caddy listens on :8080 so it needs no caps.
+# The upstream binary carries cap_net_bind_service as a file capability;
+# with cap_drop: [ALL] the kernel refuses to exec a binary whose file caps
+# it can't grant, so strip it. /data and /config are tmpfs at runtime.
+RUN apk add --no-cache --virtual .setcap libcap-utils     && setcap -r /usr/bin/caddy     && apk del .setcap     && addgroup -S -g 10001 web && adduser -S -D -H -u 10001 -G web web
+USER web
+
+EXPOSE 8080

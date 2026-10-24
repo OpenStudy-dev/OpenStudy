@@ -24,6 +24,15 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - /opt/postgres-data:/var/lib/postgresql/data
+    # Least privilege: read-only rootfs, only the capabilities the official
+    # entrypoint needs (chown the data/socket dirs, then drop to `postgres`).
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql
+      - /tmp
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    security_opt: ["no-new-privileges:true"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -54,6 +63,13 @@ services:
     environment:
       # Tell the storage layer where the canonical course tree lives.
       STUDY_ROOT: "/opt/courses"
+    # Least privilege: non-root user (Dockerfile), no capabilities,
+    # read-only rootfs. /tmp is where uploads spool.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -108,9 +124,19 @@ services:
     ports:
       # Bind to localhost only; the host's reverse proxy (Caddy etc.)
       # terminates TLS and forwards here.
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8080:8080"
+    # Least privilege: non-root user on an unprivileged port, no
+    # capabilities, read-only rootfs (Caddy's state dirs are tmpfs).
+    read_only: true
+    tmpfs:
+      # Owned by the image's `web` user (uid 10001) — tmpfs defaults to root.
+      - /data:uid=10001,gid=10001,mode=0700
+      - /config:uid=10001,gid=10001,mode=0700
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/"]
       interval: 15s
       timeout: 5s
       retries: 4
